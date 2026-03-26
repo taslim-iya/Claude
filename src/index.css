@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+.sidebar-link {
+  @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors;
+}
+.sidebar-link.active {
+  @apply bg-indigo-600 text-white;
+}
+.sidebar-link:not(.active) {
+  @apply text-slate-400 hover:bg-slate-800 hover:text-slate-100;
+}
