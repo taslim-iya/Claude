@@ -1,0 +1,7 @@
+[build]
+  command = "npx prisma generate && npm run build"
+  publish = ".next"
+
+[build.environment]
+  DATABASE_URL = "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+  JWT_SECRET = "netlify-build-placeholder-change-in-env"
