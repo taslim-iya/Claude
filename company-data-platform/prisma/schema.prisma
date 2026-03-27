@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+}
+
+enum VerificationStatus {
+  VERIFIED
+  PARTIAL
+  FAILED
+  UNREVIEWED
+  PENDING_ENRICHMENT
+}
+
+enum SourceType {
+  CSV_UPLOAD
+  EXCEL_UPLOAD
+  MANUAL_ENTRY
+  ENRICHMENT_API
+  WEB_SCRAPE
+  PUBLIC_FILING
+  LINKEDIN
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum EnrichmentJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String    @map("password_hash")
+  role           UserRole  @default(CLIENT)
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  lastLoginAt    DateTime? @map("last_login_at")
+
+  apiKeys        ApiKey[]
+  clientCriteria ClientCriteria?
+  apiUsageLogs   ApiUsageLog[]
+  auditLogs      AuditLog[]
+  uploads        Upload[]
+
+  @@map("users")
+}
+
+model Company {
+  id                 String             @id @default(cuid())
+  companyName        String             @map("company_name")
+  sicCode            String?            @map("sic_code")
+  industry           String?
+  description        String?
+  revenue            Decimal?           @db.Decimal(18, 2)
+  profitBeforeTax    Decimal?           @map("profit_before_tax") @db.Decimal(18, 2)
+  totalAssets        Decimal?           @map("total_assets") @db.Decimal(18, 2)
+  netAssets          Decimal?           @map("net_assets") @db.Decimal(18, 2)
+  website            String?
+  websiteDomain      String?            @map("website_domain")
+
+  verificationStatus VerificationStatus @default(UNREVIEWED) @map("verification_status")
+  verificationScore  Int?               @map("verification_score")
+  sourceType         SourceType?        @map("source_type")
+  sourceUrl          String?            @map("source_url")
+  rawSourcePayload   Json?              @map("raw_source_payload")
+  notes              String?
+
+  lastVerifiedAt     DateTime?          @map("last_verified_at")
+  lastUpdatedAt      DateTime?          @map("last_updated_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+
+  enrichmentResults  EnrichmentResult[]
+  sourceEvidence     SourceEvidence[]
+  companyEdits       CompanyEdit[]
+
+  uploadId           String?            @map("upload_id")
+  upload             Upload?            @relation(fields: [uploadId], references: [id])
+
+  @@index([companyName])
+  @@index([sicCode])
+  @@index([industry])
+  @@index([verificationStatus])
+  @@index([websiteDomain])
+  @@map("companies")
+}
+
+model SourceEvidence {
+  id             String     @id @default(cuid())
+  companyId      String     @map("company_id")
+  company        Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sourceType     SourceType @map("source_type")
+  sourceUrl      String?    @map("source_url")
+  fieldName      String     @map("field_name")
+  extractedValue String?    @map("extracted_value")
+  uploadedValue  String?    @map("uploaded_value")
+  confidence     Int?
+  rawPayload     Json?      @map("raw_payload")
+  createdAt      DateTime   @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@map("source_evidence")
+}
+
+model EnrichmentResult {
+  id             String              @id @default(cuid())
+  companyId      String              @map("company_id")
+  company        Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobId          String?             @map("job_id")
+  job            EnrichmentJob?      @relation(fields: [jobId], references: [id])
+  status         EnrichmentJobStatus @default(PENDING)
+  sourceType     SourceType          @map("source_type")
+  extractedData  Json?               @map("extracted_data")
+  confidence     Int?
+  errorMessage   String?             @map("error_message")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  completedAt    DateTime?           @map("completed_at")
+
+  @@index([companyId])
+  @@index([jobId])
+  @@map("enrichment_results")
+}
+
+model EnrichmentJob {
+  id            String              @id @default(cuid())
+  status        EnrichmentJobStatus @default(PENDING)
+  totalRecords  Int                 @default(0) @map("total_records")
+  processed     Int                 @default(0)
+  succeeded     Int                 @default(0)
+  failed        Int                 @default(0)
+  startedAt     DateTime?           @map("started_at")
+  completedAt   DateTime?           @map("completed_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+
+  results       EnrichmentResult[]
+
+  @@map("enrichment_jobs")
+}
+
+model CompanyEdit {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id")
+  fieldName   String   @map("field_name")
+  oldValue    String?  @map("old_value")
+  newValue    String?  @map("new_value")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@index([userId])
+  @@map("company_edits")
+}
+
+model Upload {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id])
+  fileName        String   @map("file_name")
+  fileSize        Int      @map("file_size")
+  fileType        String   @map("file_type")
+  filePath        String?  @map("file_path")
+  columnMapping   Json?    @map("column_mapping")
+  totalRows       Int?     @map("total_rows")
+  importedRows    Int?     @map("imported_rows")
+  duplicatesFound Int?     @map("duplicates_found")
+  status          String   @default("pending")
+  errorLog        Json?    @map("error_log")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  companies       Company[]
+
+  @@map("uploads")
+}
+
+model ApiKey {
+  id          String       @id @default(cuid())
+  userId      String       @map("user_id")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyHash     String       @unique @map("key_hash")
+  keyPrefix   String       @map("key_prefix")
+  name        String
+  status      ApiKeyStatus @default(ACTIVE)
+  rateLimit   Int          @default(1000) @map("rate_limit")
+  expiresAt   DateTime?    @map("expires_at")
+  lastUsedAt  DateTime?    @map("last_used_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  revokedAt   DateTime?    @map("revoked_at")
+
+  usageLogs   ApiUsageLog[]
+
+  @@index([keyHash])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model ClientCriteria {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  criteria    Json
+  isActive    Boolean  @default(true) @map("is_active")
+  canEdit     Boolean  @default(false) @map("can_edit")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("client_criteria")
+}
+
+model ApiUsageLog {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id])
+  apiKeyId     String?  @map("api_key_id")
+  apiKey       ApiKey?  @relation(fields: [apiKeyId], references: [id])
+  endpoint     String
+  method       String
+  statusCode   Int      @map("status_code")
+  responseTime Int?     @map("response_time")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  queryParams  Json?    @map("query_params")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([apiKeyId])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id])
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  oldValues   Json?    @map("old_values")
+  newValues   Json?    @map("new_values")
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
