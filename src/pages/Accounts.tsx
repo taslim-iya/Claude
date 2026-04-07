@@ -62,16 +62,16 @@ export default function Accounts() {
     <div className="p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Accounts</h1>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{accounts.length} companies tracked</p>
+          <h1 className="text-xl font-bold" style={{ color:'var(--text)' }}>Accounts</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>{accounts.length} companies tracked</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'rgba(255,255,255,0.3)' }} />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
             <input value={search} onChange={e=>setSearch(e.target.value)}
               placeholder="Search accounts..."
               className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-56"
-              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#fff' }} />
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
           </div>
           <button onClick={()=>setShowAdd(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
@@ -85,13 +85,13 @@ export default function Accounts() {
         {filtered.length === 0 ? (
           <div className="col-span-3 text-center py-20">
             <Building2 size={36} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
-            <p className="text-sm" style={{ color:'rgba(255,255,255,0.3)' }}>No accounts found</p>
+            <p className="text-sm" style={{ color:'var(--text-3)' }}>No accounts found</p>
             <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
               style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add first account</button>
           </div>
         ) : filtered.map(a => (
           <div key={a.id} className="rounded-xl p-5 group transition-all hover:shadow-glass"
-            style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+            style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
@@ -99,16 +99,16 @@ export default function Accounts() {
                   {a.name.slice(0,2).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">{a.name}</h3>
+                  <h3 className="text-sm font-semibold" style={{ color:'var(--text)' }}>{a.name}</h3>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <Globe size={10} style={{ color:'rgba(255,255,255,0.3)' }} />
-                    <span className="text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>{a.domain || a.website || 'No domain'}</span>
+                    <Globe size={10} style={{ color:'var(--text-3)' }} />
+                    <span className="text-xs" style={{ color:'var(--text-3)' }}>{a.domain || a.website || 'No domain'}</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onClick={()=>setDeleteId(a.id)} className="w-6 h-6 flex items-center justify-center rounded"
-                  style={{ color:'rgba(255,255,255,0.3)' }}>
+                  style={{ color:'var(--text-3)' }}>
                   <Trash2 size={11}/>
                 </button>
               </div>
@@ -118,29 +118,29 @@ export default function Accounts() {
                 {a.enrichmentStatus.replace('_',' ')}
               </span>
               <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.45)' }}>{a.industry}</span>
+                style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>{a.industry}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 pt-3" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+            <div className="grid grid-cols-3 gap-2 pt-3" style={{ borderTop:'1px solid var(--border)' }}>
               <div>
                 <div className="flex items-center gap-1 mb-0.5">
-                  <Users size={10} style={{ color:'rgba(255,255,255,0.3)' }} />
-                  <span className="text-[10px]" style={{ color:'rgba(255,255,255,0.3)' }}>Contacts</span>
+                  <Users size={10} style={{ color:'var(--text-3)' }} />
+                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>Contacts</span>
                 </div>
-                <p className="text-sm font-semibold text-white">{contactCount(a.name)}</p>
+                <p className="text-sm font-semibold" style={{ color:'var(--text)' }}>{contactCount(a.name)}</p>
               </div>
               <div>
                 <div className="flex items-center gap-1 mb-0.5">
-                  <Building2 size={10} style={{ color:'rgba(255,255,255,0.3)' }} />
-                  <span className="text-[10px]" style={{ color:'rgba(255,255,255,0.3)' }}>Employees</span>
+                  <Building2 size={10} style={{ color:'var(--text-3)' }} />
+                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>Employees</span>
                 </div>
-                <p className="text-sm font-semibold text-white">{a.employeeCount || '—'}</p>
+                <p className="text-sm font-semibold" style={{ color:'var(--text)' }}>{a.employeeCount || '—'}</p>
               </div>
               <div>
                 <div className="flex items-center gap-1 mb-0.5">
-                  <TrendingUp size={10} style={{ color:'rgba(255,255,255,0.3)' }} />
-                  <span className="text-[10px]" style={{ color:'rgba(255,255,255,0.3)' }}>Score</span>
+                  <TrendingUp size={10} style={{ color:'var(--text-3)' }} />
+                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>Score</span>
                 </div>
-                <p className="text-sm font-semibold text-white">{a.leadScore || '—'}</p>
+                <p className="text-sm font-semibold" style={{ color:'var(--text)' }}>{a.leadScore || '—'}</p>
               </div>
             </div>
           </div>
@@ -152,10 +152,10 @@ export default function Accounts() {
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color:'rgba(255,255,255,0.4)' }}>Company Name *</label>
+                style={{ color:'var(--text-2)' }}>Company Name *</label>
               <input placeholder="Acme Corp" value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))}
                 className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
             </div>
             {[
               {label:'Domain',key:'domain',placeholder:'acmecorp.com'},
@@ -163,27 +163,27 @@ export default function Accounts() {
             ].map(f=>(
               <div key={f.key}>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color:'rgba(255,255,255,0.4)' }}>{f.label}</label>
+                  style={{ color:'var(--text-2)' }}>{f.label}</label>
                 <input placeholder={f.placeholder}
                   value={(form as any)[f.key]} onChange={e=>setForm(x=>({...x,[f.key]:e.target.value}))}
                   className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                  style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+                  style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
               </div>
             ))}
           </div>
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-              style={{ color:'rgba(255,255,255,0.4)' }}>Industry</label>
+              style={{ color:'var(--text-2)' }}>Industry</label>
             <select value={form.industry} onChange={e=>setForm(x=>({...x,industry:e.target.value}))}
               className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-              style={{ background:'#1a1a1a', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
               {INDUSTRY_OPTS.map(o=><option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={()=>setShowAdd(false)}
               className="px-4 py-2 text-sm rounded-lg"
-              style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)' }}>Cancel</button>
+              style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleAdd}
               className="px-4 py-2 text-sm font-semibold rounded-lg"
               style={{ background:'#5b6ef9', color:'#fff' }}>Add Account</button>

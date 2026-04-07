@@ -55,16 +55,16 @@ export default function Contacts() {
     <div className="p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Contacts</h1>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{contacts.length} contacts</p>
+          <h1 className="text-xl font-bold" style={{ color:'var(--text)' }}>Contacts</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>{contacts.length} contacts</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'rgba(255,255,255,0.3)' }} />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
             <input value={search} onChange={e=>setSearch(e.target.value)}
               placeholder="Search contacts..."
               className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-56"
-              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#fff' }} />
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
           </div>
           <button onClick={()=>setShowAdd(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
@@ -78,13 +78,13 @@ export default function Contacts() {
         {filtered.length === 0 ? (
           <div className="col-span-3 text-center py-20">
             <UserCircle size={36} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
-            <p className="text-sm" style={{ color:'rgba(255,255,255,0.3)' }}>No contacts found</p>
+            <p className="text-sm" style={{ color:'var(--text-3)' }}>No contacts found</p>
             <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
               style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add first contact</button>
           </div>
         ) : filtered.map(c => (
           <div key={c.id} className="rounded-xl p-4 group transition-all hover:shadow-glass"
-            style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+            style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
@@ -92,13 +92,13 @@ export default function Contacts() {
                   {c.firstName[0]}{c.lastName[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white leading-tight">{getName(c)}</p>
-                  <p className="text-xs mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{c.title}</p>
+                  <p className="text-sm font-semibold leading-tight" style={{ color:'var(--text)' }}>{getName(c)}</p>
+                  <p className="text-xs mt-0.5" style={{ color:'var(--text-2)' }}>{c.title}</p>
                 </div>
               </div>
               <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                 <button onClick={()=>setDeleteId(c.id)} className="w-6 h-6 flex items-center justify-center rounded"
-                  style={{ color:'rgba(255,255,255,0.3)' }}><Trash2 size={11}/></button>
+                  style={{ color:'var(--text-3)' }}><Trash2 size={11}/></button>
               </div>
             </div>
             <div className="flex items-center gap-1.5 mb-2">
@@ -106,19 +106,19 @@ export default function Contacts() {
                 {c.outreachStatus.replace('_',' ')}
               </span>
             </div>
-            <div className="space-y-1.5 pt-2" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+            <div className="space-y-1.5 pt-2" style={{ borderTop:'1px solid var(--border)' }}>
               <div className="flex items-center gap-2">
-                <Building2 size={11} style={{ color:'rgba(255,255,255,0.3)' }} />
-                <span className="text-xs" style={{ color:'rgba(255,255,255,0.5)' }}>{c.accountName || '—'}</span>
+                <Building2 size={11} style={{ color:'var(--text-3)' }} />
+                <span className="text-xs" style={{ color:'var(--text-2)' }}>{c.accountName || '—'}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail size={11} style={{ color:'rgba(255,255,255,0.3)' }} />
-                <span className="text-xs truncate" style={{ color:'rgba(255,255,255,0.5)' }}>{c.email}</span>
+                <Mail size={11} style={{ color:'var(--text-3)' }} />
+                <span className="text-xs truncate" style={{ color:'var(--text-2)' }}>{c.email}</span>
               </div>
               {c.phone && (
                 <div className="flex items-center gap-2">
-                  <Phone size={11} style={{ color:'rgba(255,255,255,0.3)' }} />
-                  <span className="text-xs" style={{ color:'rgba(255,255,255,0.5)' }}>{c.phone}</span>
+                  <Phone size={11} style={{ color:'var(--text-3)' }} />
+                  <span className="text-xs" style={{ color:'var(--text-2)' }}>{c.phone}</span>
                 </div>
               )}
             </div>
@@ -138,19 +138,19 @@ export default function Contacts() {
             ].map(f=>(
               <div key={f.key}>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color:'rgba(255,255,255,0.4)' }}>{f.label}</label>
+                  style={{ color:'var(--text-2)' }}>{f.label}</label>
                 <input placeholder={f.placeholder}
                   value={(form as any)[f.key]} onChange={e=>setForm(x=>({...x,[f.key]:e.target.value}))}
                   className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                  style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+                  style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
               </div>
             ))}
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color:'rgba(255,255,255,0.4)' }}>Company</label>
+                style={{ color:'var(--text-2)' }}>Company</label>
               <select value={form.accountName} onChange={e=>setForm(x=>({...x,accountName:e.target.value}))}
                 className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                style={{ background:'#1a1a1a', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
                 <option value="">Select company</option>
                 {accounts.map(a=><option key={a.id} value={a.name}>{a.name}</option>)}
               </select>
@@ -159,7 +159,7 @@ export default function Contacts() {
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={()=>setShowAdd(false)}
               className="px-4 py-2 text-sm rounded-lg"
-              style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)' }}>Cancel</button>
+              style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleAdd}
               className="px-4 py-2 text-sm font-semibold rounded-lg"
               style={{ background:'#5b6ef9', color:'#fff' }}>Add Contact</button>
