@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ExportModal from '../components/ui/ExportModal';
 import EnrichmentModal from '../components/ui/EnrichmentModal';
 import ImportLeadsModal from '../components/ui/ImportLeadsModal';
+import LeadDetailPanel from '../components/LeadDetailPanel';
 import type { Contact } from '../types';
 
 const STATUS_OPTS = ['not_contacted','in_sequence','replied','interested','not_interested','unsubscribed','bounced'] as const;
@@ -34,6 +35,7 @@ export default function Leads() {
   const [showExport, setShowExport] = useState(false);
   const [showEnrich, setShowEnrich] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact|null>(null);
   const [form, setForm] = useState({ firstName:'', lastName:'', email:'', title:'', accountName:'', outreachStatus:'not_contacted' as typeof STATUS_OPTS[number], source:'Apollo', phone:'' });
   const [page, setPage] = useState(1);
   const PER_PAGE = 15;
@@ -191,7 +193,7 @@ export default function Leads() {
                     <input type="checkbox" checked={selected.has(c.id)} onChange={()=>toggleSelect(c.id)}
                       className="w-3.5 h-3.5 rounded" />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={()=>setSelectedContact(c)} style={{ cursor:'pointer' }}>
                     <div className="flex items-center gap-2.5">
                       <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
                         style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
@@ -346,6 +348,8 @@ export default function Leads() {
         open={showImport}
         onClose={()=>setShowImport(false)}
       />
+
+      <LeadDetailPanel contact={selectedContact} onClose={()=>setSelectedContact(null)} />
     </div>
   );
 }

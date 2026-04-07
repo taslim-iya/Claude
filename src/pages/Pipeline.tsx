@@ -27,7 +27,7 @@ export default function Pipeline() {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string|null>(null);
   const [dragId, setDragId] = useState<string|null>(null);
-  const [dragOverId, setDragOverId] = useState<string|null>(null);
+  const [dragOverStage, setDragOverStage] = useState<string|null>(null);
   const [form, setForm] = useState({ name:'', accountName:'', contactName:'', value:0, stage:'new' as PipelineStage, closeDate:'', notes:'' });
 
   const byStage = (stage: PipelineStage) => opportunities.filter(o => o.stage === stage);
@@ -65,7 +65,7 @@ export default function Pipeline() {
     if (!dragId) return;
     opportunityOps.update(dragId, { stage, updatedAt: new Date().toISOString() });
     setDragId(null);
-    setDragOverId(null);
+    setDragOverStage(null);
   };
 
   return (
@@ -79,7 +79,7 @@ export default function Pipeline() {
         </div>
         <button onClick={()=>setShowAdd(true)}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background:'#5b6ef9', color:'var(--text)' }}>
+          style={{ background:'#5b6ef9', color:'#fff' }}>
           <Plus size={13}/>Add Deal
         </button>
       </div>
@@ -92,10 +92,16 @@ export default function Pipeline() {
           return (
             <div key={stage}
               className="flex-shrink-0 rounded-xl p-3"
-              style={{ width:220, background:'var(--surface)', border:`1px solid ${dragOverId===stage?color:'var(--surface-2)'}` }}
-              onDragOver={e=>{e.preventDefault();setDragOverId(stage);}}
+              style={{
+                width:220, background:'var(--surface)', border:'1px solid var(--surface-2)',
+                outline: dragOverStage===stage ? '2px dashed #5b6ef9' : 'none',
+                outlineOffset: -2,
+                borderRadius: 12,
+                transition: 'outline 150ms ease',
+              }}
+              onDragOver={e=>{e.preventDefault();setDragOverStage(stage);}}
               onDrop={()=>handleDrop(stage)}
-              onDragLeave={()=>setDragOverId(null)}>
+              onDragLeave={()=>setDragOverStage(null)}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ background:color }} />
@@ -116,7 +122,7 @@ export default function Pipeline() {
                   <div key={d.id}
                     draggable
                     onDragStart={()=>setDragId(d.id)}
-                    onDragEnd={()=>{setDragId(null);setDragOverId(null);}}
+                    onDragEnd={()=>{setDragId(null);setDragOverStage(null);}}
                     className="rounded-lg p-3 cursor-grab active:cursor-grabbing group"
                     style={{ background:'var(--surface)', border:'1px solid var(--border)', opacity:dragId===d.id?0.5:1 }}>
                     <div className="flex items-start justify-between gap-1">
@@ -159,33 +165,32 @@ export default function Pipeline() {
       <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="Add Deal" size="md">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            {[
-              {label:'Deal Name *',key:'name',placeholder:'Acme Corp — Enterprise'},
-              {label:'Company *',key:'accountName',placeholder:'Acme Corp'},
-              {label:'Contact',key:'contactName',placeholder:'Jane Smith'},
-              {label:'Close Date',key:'closeDate',type:'date'},
-            ].map(f=>(
-              <div key={f.key}>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color:'var(--text-2)' }}>{f.label}</label>
-                <input type={f.type||'text'} placeholder={f.placeholder}
-                  value={(form as any)[f.key]} onChange={e=>setForm(x=>({...x,[f.key]:e.target.value}))}
-                  className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                  style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)', colorScheme:'dark' }} />
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color:'var(--text-2)' }}>Deal Value ($)</label>
-              <input type="number" placeholder="25000" value={form.value||''} onChange={e=>setForm(x=>({...x,value:Number(e.target.value)}))}
+            <div className="col-span-2">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color:'var(--text-3)' }}>Deal Name *</label>
+              <input placeholder="Q2 Enterprise Deal" value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))}
                 className="w-full px-3 py-2 text-sm rounded-lg outline-none"
                 style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color:'var(--text-2)' }}>Stage</label>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color:'var(--text-3)' }}>Company *</label>
+              <input placeholder="Acme Corp" value={form.accountName} onChange={e=>setForm(x=>({...x,accountName:e.target.value}))}
+                className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color:'var(--text-3)' }}>Value ($)</label>
+              <input type="number" placeholder="10000" value={form.value||''} onChange={e=>setForm(x=>({...x,value:Number(e.target.value)}))}
+                className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color:'var(--text-3)' }}>Close Date</label>
+              <input type="date" value={form.closeDate} onChange={e=>setForm(x=>({...x,closeDate:e.target.value}))}
+                className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color:'var(--text-3)' }}>Stage</label>
               <select value={form.stage} onChange={e=>setForm(x=>({...x,stage:e.target.value as PipelineStage}))}
                 className="w-full px-3 py-2 text-sm rounded-lg outline-none"
                 style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
@@ -194,12 +199,10 @@ export default function Pipeline() {
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={()=>setShowAdd(false)}
-              className="px-4 py-2 text-sm rounded-lg"
+            <button onClick={()=>setShowAdd(false)} className="px-4 py-2 text-sm rounded-lg"
               style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
-            <button onClick={handleAdd}
-              className="px-4 py-2 text-sm font-semibold rounded-lg"
-              style={{ background:'#5b6ef9', color:'var(--text)' }}>Add Deal</button>
+            <button onClick={handleAdd} className="px-4 py-2 text-sm font-semibold rounded-lg"
+              style={{ background:'#5b6ef9', color:'#fff' }}>Add Deal</button>
           </div>
         </div>
       </Modal>

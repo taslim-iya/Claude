@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Mail, Phone, Bell, Shield, Save } from 'lucide-react';
+import { Mail, Phone, Bell, Shield, Save, LogOut } from 'lucide-react';
 
 export default function Profile() {
   const { toast } = useApp();
@@ -114,7 +114,7 @@ export default function Profile() {
       </div>
 
       {/* Security */}
-      <div className="rounded-xl p-6" style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
+      <div className="rounded-xl p-6 mb-4" style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
         <h3 className="text-sm font-semibold  mb-4 flex items-center gap-2" style={{ color:"var(--text)" }}><Shield size={14}/>Security</h3>
         <div className="space-y-2">
           <button className="w-full text-left flex items-center justify-between p-3 rounded-xl transition-colors"
@@ -139,6 +139,19 @@ export default function Profile() {
               style={{ background:'rgba(245,158,11,0.12)', color:'#f59e0b' }}>Not enabled</span>
           </button>
         </div>
+      </div>
+
+      <div className="mt-8 pt-6" style={{ borderTop:'1px solid var(--border)' }}>
+        <button
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg"
+          style={{ background:'rgba(239,68,68,0.1)', color:'#ef4444', border:'1px solid rgba(239,68,68,0.2)' }}
+          onClick={() => {
+            localStorage.removeItem('piq_auth');
+            localStorage.removeItem('piq_demo');
+            window.location.reload();
+          }}>
+          <LogOut size={14}/>Sign Out
+        </button>
       </div>
     </div>
   );

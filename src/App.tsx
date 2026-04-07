@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -29,8 +29,9 @@ import AIAutomation from './pages/AIAutomation';
 import AIQualification from './pages/AIQualification';
 import MeetingScheduler from './pages/MeetingScheduler';
 import AIAssistant from './components/ui/AIAssistant';
+import Login from './pages/Login';
 
-function AppShell() {
+function AppShellWithLogout({ onLogout }: { onLogout: () => void }) {
   const { showCmd, setShowCmd } = useApp();
 
   useEffect(() => {
@@ -47,7 +48,7 @@ function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg)' }}>
-      <Sidebar />
+      <Sidebar onLogout={onLogout} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopNav />
         <main className="flex-1 overflow-y-auto">
@@ -84,11 +85,36 @@ function AppShell() {
 }
 
 export default function App() {
+  const [authed, setAuthed] = useState(() => localStorage.getItem('piq_auth') === 'true');
+  const [demoDismissed, setDemoDismissed] = useState(false);
+  const isDemo = localStorage.getItem('piq_demo') === 'true';
+
+  const handleLogin = () => setAuthed(true);
+  const handleLogout = () => {
+    localStorage.removeItem('piq_auth');
+    localStorage.removeItem('piq_demo');
+    setAuthed(false);
+  };
+
+  if (!authed) {
+    return (
+      <ThemeProvider>
+        <Login onLogin={handleLogin} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider>
       <AppProvider>
         <HashRouter>
-          <AppShell />
+          {isDemo && !demoDismissed && (
+            <div style={{ background: '#5b6ef9', color: '#fff', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, position: 'relative', flexShrink: 0, zIndex: 100 }}>
+              🎉 Demo Mode — You're viewing sample data. No real emails will be sent.
+              <button onClick={() => setDemoDismissed(true)} style={{ position: 'absolute', right: 16, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+            </div>
+          )}
+          <AppShellWithLogout onLogout={handleLogout} />
         </HashRouter>
       </AppProvider>
     </ThemeProvider>

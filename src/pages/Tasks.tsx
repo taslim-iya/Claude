@@ -60,7 +60,7 @@ export default function Tasks() {
         </div>
         <button onClick={()=>setShowAdd(true)}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background:'#5b6ef9', color:'var(--text)' }}>
+          style={{ background:'#5b6ef9', color:'#fff' }}>
           <Plus size={13}/>Add Task
         </button>
       </div>
@@ -82,7 +82,7 @@ export default function Tasks() {
             className="text-xs px-3 py-1.5 rounded-lg capitalize"
             style={{
               background:priority===p?'var(--border-2)':'var(--surface)',
-              color:priority===p?'#fff':'var(--text-2)',
+              color:priority===p?'var(--text)':'var(--text-2)',
               border:'1px solid var(--border)'
             }}>{p}</button>
         ))}
@@ -107,7 +107,7 @@ export default function Tasks() {
                 }
               </button>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium text-white ${t.completed?'line-through opacity-50':''}`}>{t.title}</p>
+                <p className={`text-sm font-medium ${t.completed?'line-through opacity-50':''}`} style={{ color:'var(--text)' }}>{t.title}</p>
                 {t.description && <p className="text-xs mt-0.5 truncate" style={{ color:'var(--text-3)' }}>{t.description}</p>}
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -185,7 +185,7 @@ export default function Tasks() {
               style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleAdd}
               className="px-4 py-2 text-sm font-semibold rounded-lg"
-              style={{ background:'#5b6ef9', color:'var(--text)' }}>Create Task</button>
+              style={{ background:'#5b6ef9', color:'#fff' }}>Add Task</button>
           </div>
         </div>
       </Modal>

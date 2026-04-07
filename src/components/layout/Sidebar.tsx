@@ -4,7 +4,7 @@ import {
   Mail, Workflow, Inbox, BarChart2, Activity,
   GitBranch, CheckSquare, AlertOctagon, Zap,
   Plug, CreditCard, Settings, ChevronRight, Target,
-  Sparkles, UserCheck, Calendar
+  Sparkles, UserCheck, Calendar, LogOut
 } from 'lucide-react';
 
 const nav = [
@@ -43,7 +43,7 @@ const nav = [
   ]},
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
   const location = useLocation();
 
   return (
@@ -113,6 +113,19 @@ export default function Sidebar() {
           <ChevronRight size={12} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         </div>
       </div>
+
+      {onLogout && (
+        <div className="px-3 pb-3">
+          <button onClick={onLogout}
+            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all"
+            style={{ color: 'var(--text-3)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text)'; (e.currentTarget as HTMLElement).style.background = 'var(--sidebar-hover)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+            <LogOut size={15} style={{ flexShrink: 0 }} />
+            Sign Out
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

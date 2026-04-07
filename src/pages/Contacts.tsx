@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Plus, Search, Trash2, UserCircle } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import LeadDetailPanel from '../components/LeadDetailPanel';
 import type { Contact } from '../types';
 
 const PER_PAGE = 20;
@@ -50,6 +51,7 @@ export default function Contacts() {
   const [deleteId, setDeleteId] = useState<string|null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
+  const [selectedContact, setSelectedContact] = useState<Contact|null>(null);
   const [form, setForm] = useState({ firstName:'', lastName:'', email:'', title:'', accountName:'', phone:'', source:'Manual' });
 
   const filtered = contacts.filter(c => {
@@ -183,7 +185,7 @@ export default function Contacts() {
                     <td className="px-4 py-3">
                       <input type="checkbox" className="w-3.5 h-3.5" checked={selected.has(c.id)} onChange={()=>toggleSelect(c.id)} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={()=>setSelectedContact(c)} style={{ cursor:'pointer' }}>
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
                           style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
@@ -303,6 +305,8 @@ export default function Contacts() {
         confirmLabel="Delete"
         variant="danger"
       />
+
+      <LeadDetailPanel contact={selectedContact} onClose={()=>setSelectedContact(null)} />
     </div>
   );
 }
