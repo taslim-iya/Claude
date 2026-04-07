@@ -100,6 +100,7 @@ export default function Campaigns() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [hoveredId, setHoveredId] = useState<string|null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<typeof campaigns[0]|null>(null);
 
   const filtered = campaigns.filter(c => {
     const q = search.toLowerCase();
@@ -265,7 +266,7 @@ export default function Campaigns() {
                       <td className="w-10 px-4 py-3">
                         <input type="checkbox" className="w-3.5 h-3.5 rounded" checked={selected.has(c.id)} onChange={()=>toggleSelect(c.id)} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3" onClick={()=>setSelectedCampaign(c)} style={{ cursor:'pointer' }}>
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-semibold" style={{ color:'var(--text)' }}>{c.name}</span>
                           <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${statusBadge(c.status)}`}>{c.status}</span>
@@ -403,6 +404,41 @@ export default function Campaigns() {
         confirmLabel="Delete Campaign"
         variant="danger"
       />
+
+      {selectedCampaign && (
+        <Modal open={!!selectedCampaign} onClose={()=>setSelectedCampaign(null)} title={selectedCampaign.name} size="md">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(selectedCampaign.status)}`}>{selectedCampaign.status}</span>
+              <span className="text-xs" style={{ color:'var(--text-3)' }}>{selectedCampaign.channel}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label:'Contacts', value:selectedCampaign.contactCount||0 },
+                { label:'Emails Sent', value:selectedCampaign.emailsSent||0 },
+                { label:'Open Rate', value:`${selectedCampaign.openRate||0}%` },
+                { label:'Reply Rate', value:`${selectedCampaign.replyRate||0}%` },
+                { label:'Meetings Booked', value:selectedCampaign.meetingsBooked||0 },
+                { label:'Created', value:new Date(selectedCampaign.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) },
+              ].map(m=>(
+                <div key={m.label} className="rounded-lg p-3" style={{ background:'var(--surface-2)', border:'1px solid var(--border)' }}>
+                  <p className="text-xs mb-1" style={{ color:'var(--text-3)' }}>{m.label}</p>
+                  <p className="text-lg font-bold" style={{ color:'var(--text)' }}>{m.value}</p>
+                </div>
+              ))}
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color:'var(--text-3)' }}>Recent Activity</p>
+              {['Email sent to 45 leads', 'Open rate increased to 38%', '3 replies received today', 'Auto-routing: 1 lead marked as Interested'].map((a,i)=>(
+                <div key={i} className="flex items-center gap-2 py-1.5" style={{ borderBottom:'1px solid var(--border)' }}>
+                  <div style={{ width:6, height:6, borderRadius:'50%', background:'#5b6ef9', flexShrink:0 }}/>
+                  <span className="text-sm" style={{ color:'var(--text-2)' }}>{a}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

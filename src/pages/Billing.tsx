@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { CheckCircle, CreditCard, Zap, Users, Mail, ArrowUpRight } from 'lucide-react';
+import Modal from '../components/ui/Modal';
 
 const plans = [
   { name:'Starter', price:49, desc:'Perfect for small teams', features:['500 leads/month','2 team members','3 active campaigns','AI personalization','Basic analytics'], highlight:false },
@@ -11,10 +12,13 @@ const plans = [
 export default function Billing() {
   const { currentPlan, toast } = useApp();
   const [billing, setBilling] = useState<'monthly'|'annual'>('monthly');
+  const [showSwitchConfirm, setShowSwitchConfirm] = useState(false);
+  const [switchTarget, setSwitchTarget] = useState('');
 
   const selectPlan = (name: string) => {
     if (name === currentPlan) return;
-    toast('success', `Switched to ${name} plan`);
+    setSwitchTarget(name);
+    setShowSwitchConfirm(true);
   };
 
   return (
@@ -139,6 +143,21 @@ export default function Billing() {
           </button>
         </div>
       </div>
+
+      <Modal open={showSwitchConfirm} onClose={()=>setShowSwitchConfirm(false)} title="Switch Plan" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm" style={{ color:'var(--text-2)' }}>
+            Switch to <strong style={{ color:'var(--text)' }}>{switchTarget}</strong>? Your billing will be updated at the next cycle.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button onClick={()=>setShowSwitchConfirm(false)} className="px-4 py-2 text-sm rounded-lg"
+              style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
+            <button onClick={()=>{ setShowSwitchConfirm(false); toast('success',`Switched to ${switchTarget} plan`); }}
+              className="px-4 py-2 text-sm font-semibold rounded-lg"
+              style={{ background:'#5b6ef9', color:'#fff' }}>Confirm Switch</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Trash2, List, Search } from 'lucide-react';
+import { Plus, Trash2, List, Search, MoreHorizontal } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 
@@ -15,6 +15,8 @@ export default function Lists() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [hoveredId, setHoveredId] = useState<string|null>(null);
+  const [menuId, setMenuId] = useState<string|null>(null);
+  const [selectedList, setSelectedList] = useState<typeof lists[0]|null>(null);
 
   const handleAdd = () => {
     if (!form.name) { toast('error','List name required'); return; }
@@ -112,7 +114,7 @@ export default function Lists() {
                 <td className="w-10 px-4 py-3">
                   <input type="checkbox" className="w-3.5 h-3.5 rounded" checked={selected.has(l.id)} onChange={()=>toggleSelect(l.id)} />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3" onClick={()=>setSelectedList(l)} style={{ cursor:'pointer' }}>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold" style={{ color:'var(--text)' }}>{l.name}</span>
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize"
@@ -139,11 +141,29 @@ export default function Lists() {
                   <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{l.owner}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <button onClick={()=>setDeleteId(l.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded"
-                    style={{ color:'var(--text-3)' }}>
-                    <Trash2 size={13}/>
-                  </button>
+                  <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={e=>{ e.stopPropagation(); setMenuId(menuId===l.id?null:l.id); }}
+                      style={{ color:'var(--text-2)', background:'transparent', border:'none', cursor:'pointer', padding:4 }}>
+                      <MoreHorizontal size={14}/>
+                    </button>
+                    {menuId===l.id && (
+                      <div style={{ position:'absolute', right:0, top:'100%', zIndex:20, width:140, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:8, boxShadow:'0 4px 16px rgba(0,0,0,0.1)', overflow:'hidden' }}>
+                        {[
+                          { label:'Edit', action:()=>{ setMenuId(null); toast('info','Edit coming soon'); } },
+                          { label:'Duplicate', action:()=>{ setMenuId(null); listOps.add({...l, id:crypto.randomUUID(), name:l.name+' (copy)', createdAt:new Date().toISOString(), lastUpdated:new Date().toISOString()}); toast('success','List duplicated'); } },
+                          { label:'Export', action:()=>{ setMenuId(null); toast('success','Export started'); } },
+                          { label:'Delete', action:()=>{ setMenuId(null); listOps.del(l.id); toast('success','List deleted'); } },
+                        ].map(item=>(
+                          <button key={item.label} onClick={item.action}
+                            style={{ display:'block', width:'100%', padding:'8px 12px', textAlign:'left', fontSize:13, color:item.label==='Delete'?'#ef4444':'var(--text)', background:'transparent', border:'none', cursor:'pointer' }}
+                            onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='var(--surface-2)'}
+                            onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='transparent'}>
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -221,6 +241,26 @@ export default function Lists() {
         confirmLabel="Delete"
         variant="danger"
       />
+
+      {selectedList && (
+        <>
+          <div onClick={()=>setSelectedList(null)} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.3)', zIndex:39 }}/>
+          <div style={{ position:'fixed', right:0, top:0, height:'100%', width:440, zIndex:40, background:'var(--surface)', borderLeft:'1px solid var(--border)', display:'flex', flexDirection:'column', boxShadow:'-8px 0 32px rgba(0,0,0,0.15)' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px', borderBottom:'1px solid var(--border)' }}>
+              <div>
+                <p style={{ fontSize:15, fontWeight:700, color:'var(--text)' }}>{selectedList.name}</p>
+                <p style={{ fontSize:12, color:'var(--text-2)' }}>{selectedList.type} list · {selectedList.contactCount} contacts</p>
+              </div>
+              <button onClick={()=>setSelectedList(null)} style={{ color:'var(--text-3)', background:'transparent', border:'none', cursor:'pointer' }}>
+                ✕
+              </button>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:'16px 20px' }}>
+              <p style={{ fontSize:13, color:'var(--text-3)', textAlign:'center', marginTop:40 }}>No contacts in this list yet. Add contacts from the Leads or Contacts page.</p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

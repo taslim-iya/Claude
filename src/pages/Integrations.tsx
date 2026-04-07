@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useApp } from '../context/AppContext';
 import { CheckCircle, Plus, ExternalLink, Zap, RefreshCw, Key, Coins, TestTube, Clock } from 'lucide-react';
 
 const integrations = [
@@ -24,6 +25,7 @@ const CREDITS: Record<string,number> = { i1:4820, i2:9150, i3:1200 };
 const SYNC_OPTIONS = ['Real-time','Every 15 min','Hourly','Daily'];
 
 export default function Integrations() {
+  const { toast } = useApp();
   const [activeCategory, setActiveCategory] = useState('All');
   const [statuses, setStatuses] = useState<Record<string,string>>({});
   const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
@@ -33,13 +35,30 @@ export default function Integrations() {
   const [testResult, setTestResult] = useState<Record<string,boolean>>({});
 
   const getStatus = (i: typeof integrations[0]) => statuses[i.id] ?? i.status;
-  const toggle = (id: string, current: string) => setStatuses(s => ({...s, [id]: current==='connected'?'disconnected':'connected'}));
+
+  const handleConnect = (i: typeof integrations[0]) => {
+    setStatuses(s => ({...s, [i.id]: 'connected'}));
+    toast('success', `${i.name} connected successfully!`);
+  };
+
+  const handleDisconnect = (i: typeof integrations[0]) => {
+    if (window.confirm('Disconnect this integration?')) {
+      setStatuses(s => ({...s, [i.id]: 'disconnected'}));
+      toast('success', `${i.name} disconnected`);
+    }
+  };
+
   const shown = activeCategory==='All' ? integrations : integrations.filter(i=>i.category===activeCategory);
   const connected = integrations.filter(i=>getStatus(i)==='connected').length;
 
   const testConnection = (id: string) => {
     setTesting(id);
-    setTimeout(()=>{ setTesting(null); setTestResult(s=>({...s,[id]:true})); setTimeout(()=>setTestResult(s=>({...s,[id]:false})),3000); }, 1500);
+    setTimeout(()=>{
+      setTesting(null);
+      setTestResult(s=>({...s,[id]:true}));
+      toast('success', 'Connection test successful — 250 credits remaining');
+      setTimeout(()=>setTestResult(s=>({...s,[id]:false})),3000);
+    }, 1500);
   };
 
   return (
@@ -88,15 +107,29 @@ export default function Integrations() {
                       <CheckCircle size={11}/>Connected
                     </span>
                   )}
-                  <button onClick={()=>toggle(i.id, status)}
-                    className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                    style={{
-                      background: status==='connected'?'var(--surface-2)':'rgba(91,110,249,0.15)',
-                      color: status==='connected'?'var(--text-2)':'#5b6ef9',
-                      border: status==='connected'?'1px solid var(--border)':'1px solid rgba(91,110,249,0.2)'
-                    }}>
-                    {status==='connected'?'Disconnect':'Connect'}
-                  </button>
+                  {status === 'connected' ? (
+                    <button
+                      onClick={() => handleDisconnect(i)}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: 'var(--surface-2)',
+                        color: 'var(--text-2)',
+                        border: '1px solid var(--border)'
+                      }}>
+                      Disconnect
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleConnect(i)}
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                      style={{
+                        background: 'rgba(91,110,249,0.15)',
+                        color: '#5b6ef9',
+                        border: '1px solid rgba(91,110,249,0.2)'
+                      }}>
+                      Connect
+                    </button>
+                  )}
                 </div>
               </div>
               <p className="text-xs leading-relaxed" style={{ color:'var(--text-2)' }}>{i.desc}</p>
