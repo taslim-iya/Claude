@@ -1,94 +1,172 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Trash2, List, Users, Calendar } from 'lucide-react';
+import { Plus, Trash2, List, Search } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+
+const PER_PAGE = 20;
 
 export default function Lists() {
   const { lists, listOps, toast } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string|null>(null);
   const [form, setForm] = useState({ name:'', description:'', type:'static' as 'static'|'dynamic' });
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [hoveredId, setHoveredId] = useState<string|null>(null);
 
   const handleAdd = () => {
     if (!form.name) { toast('error','List name required'); return; }
     const now = new Date().toISOString();
     listOps.add({
-      id: crypto.randomUUID(),
-      name: form.name,
-      description: form.description,
-      type: form.type,
-      contactCount: 0,
-      owner: 'Sarah Miller',
-      tags: [],
-      createdAt: now,
-      lastUpdated: now,
+      id: crypto.randomUUID(), name: form.name, description: form.description,
+      type: form.type, contactCount: 0, owner: 'Sarah Miller',
+      tags: [], createdAt: now, lastUpdated: now,
     });
     setShowAdd(false);
     setForm({ name:'', description:'', type:'static' });
   };
 
+  const filtered = lists.filter(l => {
+    const q = search.toLowerCase();
+    return !search || l.name.toLowerCase().includes(q) || (l.description||'').toLowerCase().includes(q);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
+  const allChecked = paginated.length > 0 && paginated.every(l => selected.has(l.id));
+  const toggleAll = () => {
+    if (allChecked) {
+      setSelected(s => { const n = new Set(s); paginated.forEach(l => n.delete(l.id)); return n; });
+    } else {
+      setSelected(s => { const n = new Set(s); paginated.forEach(l => n.add(l.id)); return n; });
+    }
+  };
+  const toggleSelect = (id: string) => {
+    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const start = filtered.length === 0 ? 0 : (safePage - 1) * PER_PAGE + 1;
+  const end = Math.min(safePage * PER_PAGE, filtered.length);
+
   return (
     <div className="p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold" style={{ color:"var(--text)" }}>Prospect Lists</h1>
+          <h1 className="text-xl font-bold" style={{ color:'var(--text)' }}>Prospect Lists</h1>
           <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>{lists.length} lists</p>
         </div>
-        <button onClick={()=>setShowAdd(true)}
-          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background:'#5b6ef9', color:'var(--text)' }}>
-          <Plus size={13}/>New List
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
+            <input value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }}
+              placeholder="Search lists..."
+              className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-48"
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
+          </div>
+          <button onClick={()=>setShowAdd(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
+            style={{ background:'#5b6ef9', color:'var(--text)' }}>
+            <Plus size={13}/>New List
+          </button>
+        </div>
       </div>
 
-      {lists.length === 0 ? (
-        <div className="text-center py-24">
-          <List size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
-          <p className="text-sm" style={{ color:'var(--text-3)' }}>No lists yet</p>
-          <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
-            style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Create your first list</button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-4">
-          {lists.map(l => (
-            <div key={l.id} className="rounded-xl p-5 group transition-all hover:shadow-glass"
-              style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background:'rgba(91,110,249,0.12)' }}>
-                  <List size={16} style={{ color:'#5b6ef9' }} />
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={()=>setDeleteId(l.id)} className="w-6 h-6 flex items-center justify-center rounded"
-                    style={{ color:'var(--text-3)' }}><Trash2 size={11}/></button>
-                </div>
-              </div>
-              <h3 className="text-sm font-semibold  mb-1" style={{ color:"var(--text)" }}>{l.name}</h3>
-              {l.description && <p className="text-xs mb-3" style={{ color:'var(--text-2)' }}>{l.description}</p>}
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] px-2 py-0.5 rounded-full capitalize"
-                  style={{
-                    background: l.type==='dynamic'?'rgba(16,185,129,0.12)':'rgba(91,110,249,0.12)',
-                    color: l.type==='dynamic'?'#10b981':'#5b6ef9'
-                  }}>
-                  {l.type}
-                </span>
-              </div>
-              <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop:'1px solid var(--border)' }}>
-                <div className="flex items-center gap-1.5">
-                  <Users size={11} style={{ color:'var(--text-3)' }} />
-                  <span className="text-xs" style={{ color:'var(--text-2)' }}>{l.contactCount} contacts</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar size={11} style={{ color:'var(--text-3)' }} />
-                  <span className="text-xs" style={{ color:'var(--text-3)' }}>
-                    {new Date(l.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+      <div className="rounded-xl overflow-x-auto" style={{ border:'1px solid var(--border)' }}>
+        <table className="w-full">
+          <thead>
+            <tr style={{ background:'var(--surface-2)', borderBottom:'1px solid var(--border)' }}>
+              <th className="w-10 px-4 py-3">
+                <input type="checkbox" className="w-3.5 h-3.5 rounded" checked={allChecked} onChange={toggleAll} />
+              </th>
+              <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>List Name</th>
+              <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Description</th>
+              <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Contacts</th>
+              <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Last Updated</th>
+              <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Created By</th>
+              <th className="w-10 px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginated.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-16">
+                  <List size={32} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
+                  <p className="text-sm" style={{ color:'var(--text-3)' }}>
+                    {search ? 'No lists match your search' : 'No lists yet'}
+                  </p>
+                  {!search && (
+                    <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
+                      style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Create your first list</button>
+                  )}
+                </td>
+              </tr>
+            ) : paginated.map(l => (
+              <tr key={l.id} className="group transition-colors"
+                style={{ borderBottom:'1px solid var(--border)', background: hoveredId===l.id ? 'var(--surface-2)' : 'transparent' }}
+                onMouseEnter={()=>setHoveredId(l.id)}
+                onMouseLeave={()=>setHoveredId(null)}>
+                <td className="w-10 px-4 py-3">
+                  <input type="checkbox" className="w-3.5 h-3.5 rounded" checked={selected.has(l.id)} onChange={()=>toggleSelect(l.id)} />
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color:'var(--text)' }}>{l.name}</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize"
+                      style={{
+                        background: l.type==='dynamic' ? 'rgba(16,185,129,0.12)' : 'rgba(91,110,249,0.12)',
+                        color: l.type==='dynamic' ? '#10b981' : '#5b6ef9'
+                      }}>{l.type}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-[13px]" style={{ color:'var(--text-2)' }}>
+                    {l.description ? (l.description.length > 40 ? l.description.slice(0, 40) + '…' : l.description) : <span style={{ color:'var(--text-3)' }}>—</span>}
                   </span>
-                </div>
-              </div>
-            </div>
-          ))}
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{l.contactCount}</span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-[13px]" style={{ color:'var(--text-2)' }}>
+                    {new Date(l.lastUpdated).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{l.owner}</span>
+                </td>
+                <td className="px-4 py-3">
+                  <button onClick={()=>setDeleteId(l.id)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 flex items-center justify-center rounded"
+                    style={{ color:'var(--text-3)' }}>
+                    <Trash2 size={13}/>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {filtered.length > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-xs" style={{ color:'var(--text-3)' }}>
+            Showing {start}–{end} of {filtered.length}
+          </span>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+              <button key={p} onClick={()=>setPage(p)}
+                className="w-7 h-7 flex items-center justify-center rounded text-xs font-medium"
+                style={{
+                  background: p === safePage ? 'rgba(91,110,249,0.2)' : 'transparent',
+                  color: p === safePage ? '#5b6ef9' : 'var(--text-2)',
+                  border: p === safePage ? '1px solid rgba(91,110,249,0.3)' : '1px solid transparent',
+                }}>{p}</button>
+            ))}
+          </div>
         </div>
       )}
 

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Search, Trash2, Building2, Globe, Users, TrendingUp } from 'lucide-react';
+import { Plus, Search, Trash2, Building2 } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+
+const PER_PAGE = 20;
 
 const INDUSTRY_OPTS = ['SaaS','FinTech','HealthTech','E-commerce','Enterprise','Agency','Manufacturing','Other'];
 
@@ -20,6 +22,8 @@ export default function Accounts() {
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string|null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState({ name:'', domain:'', industry:'SaaS', headquarters:'', description:'' });
 
   const filtered = accounts.filter(a => {
@@ -27,36 +31,50 @@ export default function Accounts() {
     return !search || a.name.toLowerCase().includes(q) || a.domain?.toLowerCase().includes(q) || a.industry.toLowerCase().includes(q);
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * PER_PAGE;
+  const pageEnd = Math.min(pageStart + PER_PAGE, filtered.length);
+  const pageRows = filtered.slice(pageStart, pageEnd);
+
+  const toggleAll = () => {
+    if (pageRows.every(a => selected.has(a.id))) {
+      const next = new Set(selected);
+      pageRows.forEach(a => next.delete(a.id));
+      setSelected(next);
+    } else {
+      const next = new Set(selected);
+      pageRows.forEach(a => next.add(a.id));
+      setSelected(next);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+
   const handleAdd = () => {
     if (!form.name) { toast('error','Company name required'); return; }
     const now = new Date().toISOString();
     accountOps.add({
       id: crypto.randomUUID(),
-      name: form.name,
-      domain: form.domain,
-      industry: form.industry,
-      headquarters: form.headquarters,
-      description: form.description,
+      name: form.name, domain: form.domain, industry: form.industry,
+      headquarters: form.headquarters, description: form.description,
       website: form.domain ? `https://${form.domain}` : '',
-      linkedin: '',
-      employeeCount: 0,
-      revenueBand: '',
-      country: '',
-      technologies: [],
-      enrichmentStatus: 'not_enriched',
-      leadScore: 0,
-      scoreLabel: 'nurture',
-      owner: 'Sarah Miller',
-      source: 'Manual',
-      tags: [],
-      lastUpdated: now,
-      createdAt: now,
+      linkedin: '', employeeCount: 0, revenueBand: '', country: '',
+      technologies: [], enrichmentStatus: 'not_enriched',
+      leadScore: 0, scoreLabel: 'nurture', owner: 'Sarah Miller',
+      source: 'Manual', tags: [], lastUpdated: now, createdAt: now,
     });
     setShowAdd(false);
     setForm({ name:'', domain:'', industry:'SaaS', headquarters:'', description:'' });
   };
 
   const contactCount = (accountName: string) => contacts.filter(c => c.accountName === accountName).length;
+
+  const allPageSelected = pageRows.length > 0 && pageRows.every(a => selected.has(a.id));
 
   return (
     <div className="p-6 animate-fade-in">
@@ -68,7 +86,7 @@ export default function Accounts() {
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
-            <input value={search} onChange={e=>setSearch(e.target.value)}
+            <input value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }}
               placeholder="Search accounts..."
               className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-56"
               style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
@@ -81,71 +99,122 @@ export default function Accounts() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        {filtered.length === 0 ? (
-          <div className="col-span-3 text-center py-20">
-            <Building2 size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
-            <p className="text-sm" style={{ color:'var(--text-3)' }}>No accounts found</p>
-            <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
-              style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add first account</button>
+      {filtered.length === 0 ? (
+        <div className="text-center py-20">
+          <Building2 size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
+          <p className="text-sm" style={{ color:'var(--text-3)' }}>No accounts found</p>
+          <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
+            style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add first account</button>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-xl overflow-x-auto" style={{ border:'1px solid var(--border)' }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background:'var(--surface-2)', borderBottom:'1px solid var(--border)' }}>
+                  <th className="w-10 px-4 py-3">
+                    <input type="checkbox" className="w-3.5 h-3.5" checked={allPageSelected} onChange={toggleAll} />
+                  </th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Company</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Industry</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Enrichment</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Contacts</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Employees</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Score</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Last Updated</th>
+                  <th className="w-10 px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map(a => (
+                  <tr
+                    key={a.id}
+                    className="group transition-colors"
+                    style={{ borderBottom:'1px solid var(--border)' }}
+                    onMouseEnter={e=>(e.currentTarget.style.background='var(--surface-2)')}
+                    onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+                  >
+                    <td className="px-4 py-3">
+                      <input type="checkbox" className="w-3.5 h-3.5" checked={selected.has(a.id)} onChange={()=>toggleSelect(a.id)} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+                          style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
+                          {a.name.slice(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-semibold leading-tight" style={{ color:'var(--text)' }}>{a.name}</p>
+                          {(a.domain || a.website) && (
+                            <p className="text-xs" style={{ color:'var(--text-3)' }}>{a.domain || a.website}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{a.industry}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(a.enrichmentStatus)}`}>
+                        {a.enrichmentStatus.replace(/_/g,' ')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{contactCount(a.name)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{a.employeeCount || '—'}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div style={{ width:32, height:4, background:'var(--border)', borderRadius:2 }}>
+                          <div style={{ width:`${a.leadScore}%`, height:4, background: a.leadScore>=80?'#10b981':a.leadScore>=60?'#f59e0b':'#ef4444', borderRadius:2 }}/>
+                        </div>
+                        <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{a.leadScore||'—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>
+                        {new Date(a.lastUpdated || a.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button onClick={()=>setDeleteId(a.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded"
+                          style={{ color:'var(--text-3)' }}>
+                          <Trash2 size={13}/>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : filtered.map(a => (
-          <div key={a.id} className="rounded-xl p-5 group transition-all hover:shadow-glass"
-            style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white"
-                  style={{ background:'linear-gradient(135deg,#1e2040,#2a2d5a)' }}>
-                  {a.name.slice(0,2).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold" style={{ color:'var(--text)' }}>{a.name}</h3>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Globe size={10} style={{ color:'var(--text-3)' }} />
-                    <span className="text-xs" style={{ color:'var(--text-3)' }}>{a.domain || a.website || 'No domain'}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={()=>setDeleteId(a.id)} className="w-6 h-6 flex items-center justify-center rounded"
-                  style={{ color:'var(--text-3)' }}>
-                  <Trash2 size={11}/>
+
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-[13px]" style={{ color:'var(--text-3)' }}>
+              Showing {pageStart + 1}–{pageEnd} of {filtered.length}
+            </span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={()=>setPage(p)}
+                  className="w-7 h-7 flex items-center justify-center text-xs rounded"
+                  style={{
+                    background: p === safePage ? '#5b6ef9' : 'var(--surface-2)',
+                    color: p === safePage ? '#fff' : 'var(--text-2)',
+                    border: '1px solid var(--border)',
+                  }}>
+                  {p}
                 </button>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(a.enrichmentStatus)}`}>
-                {a.enrichmentStatus.replace('_',' ')}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full"
-                style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>{a.industry}</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 pt-3" style={{ borderTop:'1px solid var(--border)' }}>
-              <div>
-                <div className="flex items-center gap-1 mb-0.5">
-                  <Users size={10} style={{ color:'var(--text-3)' }} />
-                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>Contacts</span>
-                </div>
-                <p className="text-sm font-semibold" style={{ color:'var(--text)' }}>{contactCount(a.name)}</p>
-              </div>
-              <div>
-                <div className="flex items-center gap-1 mb-0.5">
-                  <Building2 size={10} style={{ color:'var(--text-3)' }} />
-                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>Employees</span>
-                </div>
-                <p className="text-sm font-semibold" style={{ color:'var(--text)' }}>{a.employeeCount || '—'}</p>
-              </div>
-              <div>
-                <div className="flex items-center gap-1 mb-0.5">
-                  <TrendingUp size={10} style={{ color:'var(--text-3)' }} />
-                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>Score</span>
-                </div>
-                <p className="text-sm font-semibold" style={{ color:'var(--text)' }}>{a.leadScore || '—'}</p>
-              </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="Add Account" size="md">
         <div className="space-y-4">
