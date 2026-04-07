@@ -1,79 +1,148 @@
 import { useState } from 'react';
-import { Plus, Search, ListChecks, Zap, Users, Tag, MoreHorizontal } from 'lucide-react';
-import { prospectLists } from '../data/sampleData';
+import { useApp } from '../context/AppContext';
+import { Plus, Trash2, List, Users, Calendar } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 export default function Lists() {
-  const [q, setQ] = useState('');
-  const filtered = prospectLists.filter(l => !q || l.name.toLowerCase().includes(q.toLowerCase()) || l.description.toLowerCase().includes(q.toLowerCase()));
+  const { lists, listOps, toast } = useApp();
+  const [showAdd, setShowAdd] = useState(false);
+  const [deleteId, setDeleteId] = useState<string|null>(null);
+  const [form, setForm] = useState({ name:'', description:'', type:'static' as 'static'|'dynamic' });
+
+  const handleAdd = () => {
+    if (!form.name) { toast('error','List name required'); return; }
+    const now = new Date().toISOString();
+    listOps.add({
+      id: crypto.randomUUID(),
+      name: form.name,
+      description: form.description,
+      type: form.type,
+      contactCount: 0,
+      owner: 'Sarah Miller',
+      tags: [],
+      createdAt: now,
+      lastUpdated: now,
+    });
+    setShowAdd(false);
+    setForm({ name:'', description:'', type:'static' });
+  };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Lists & Segmentation</h1>
-          <p className="text-sm text-gray-500">Organize prospects into static and dynamic lists.</p>
+          <h1 className="text-xl font-bold text-white">Prospect Lists</h1>
+          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{lists.length} lists</p>
         </div>
-        <button className="flex items-center gap-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors"><Plus size={14} /> New List</button>
+        <button onClick={()=>setShowAdd(true)}
+          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
+          style={{ background:'#5b6ef9', color:'#fff' }}>
+          <Plus size={13}/>New List
+        </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {[
-          { label:'Total Lists', value: prospectLists.length },
-          { label:'Static Lists', value: prospectLists.filter(l=>l.type==='static').length },
-          { label:'Dynamic Lists', value: prospectLists.filter(l=>l.type==='dynamic').length },
-          { label:'Total Contacts', value: prospectLists.reduce((a,l)=>a+l.contactCount,0).toLocaleString() },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4">
-            <p className="text-xl font-bold text-gray-900">{s.value}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="relative mb-4">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search lists…" className="w-full max-w-sm pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </div>
-
-      <div className="space-y-3">
-        {filtered.map(list => (
-          <div key={list.id} className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-sm transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${list.type==='dynamic' ? 'bg-violet-50' : 'bg-indigo-50'}`}>
-                  {list.type === 'dynamic' ? <Zap size={16} className="text-violet-600" /> : <ListChecks size={16} className="text-indigo-600" />}
+      {lists.length === 0 ? (
+        <div className="text-center py-24">
+          <List size={36} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
+          <p className="text-sm" style={{ color:'rgba(255,255,255,0.3)' }}>No lists yet</p>
+          <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
+            style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Create your first list</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-4">
+          {lists.map(l => (
+            <div key={l.id} className="rounded-xl p-5 group transition-all hover:shadow-glass"
+              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background:'rgba(91,110,249,0.12)' }}>
+                  <List size={16} style={{ color:'#5b6ef9' }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h3 className="font-semibold text-gray-900">{list.name}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${list.type==='dynamic' ? 'bg-violet-50 text-violet-700' : 'bg-indigo-50 text-indigo-700'}`}>
-                      {list.type === 'dynamic' ? '⚡ Dynamic' : '📌 Static'}
-                    </span>
-                    {list.owner === 'System' && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600">Suppression</span>}
-                  </div>
-                  <p className="text-sm text-gray-500 mb-3">{list.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span className="flex items-center gap-1"><Users size={11} />{list.contactCount.toLocaleString()} contacts</span>
-                    <span>Owner: {list.owner}</span>
-                    <span>Updated {list.lastUpdated}</span>
-                  </div>
-                  {list.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {list.tags.map(t => <span key={t} className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"><Tag size={9}/>{t}</span>)}
-                    </div>
-                  )}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={()=>setDeleteId(l.id)} className="w-6 h-6 flex items-center justify-center rounded"
+                    style={{ color:'rgba(255,255,255,0.3)' }}><Trash2 size={11}/></button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 ml-4">
-                <button className="text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">View Contacts</button>
-                <button className="text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors">Add to Campaign</button>
-                <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><MoreHorizontal size={15} /></button>
+              <h3 className="text-sm font-semibold text-white mb-1">{l.name}</h3>
+              {l.description && <p className="text-xs mb-3" style={{ color:'rgba(255,255,255,0.4)' }}>{l.description}</p>}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] px-2 py-0.5 rounded-full capitalize"
+                  style={{
+                    background: l.type==='dynamic'?'rgba(16,185,129,0.12)':'rgba(91,110,249,0.12)',
+                    color: l.type==='dynamic'?'#10b981':'#5b6ef9'
+                  }}>
+                  {l.type}
+                </span>
+              </div>
+              <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center gap-1.5">
+                  <Users size={11} style={{ color:'rgba(255,255,255,0.3)' }} />
+                  <span className="text-xs" style={{ color:'rgba(255,255,255,0.45)' }}>{l.contactCount} contacts</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={11} style={{ color:'rgba(255,255,255,0.3)' }} />
+                  <span className="text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>
+                    {new Date(l.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})}
+                  </span>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      )}
+
+      <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="New List" size="sm">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color:'rgba(255,255,255,0.4)' }}>List Name *</label>
+            <input placeholder="Q2 SaaS Prospects" value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))}
+              className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
           </div>
-        ))}
-      </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color:'rgba(255,255,255,0.4)' }}>Description</label>
+            <input placeholder="Optional description" value={form.description} onChange={e=>setForm(x=>({...x,description:e.target.value}))}
+              className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color:'rgba(255,255,255,0.4)' }}>Type</label>
+            <div className="flex gap-2">
+              {(['static','dynamic'] as const).map(t=>(
+                <button key={t} onClick={()=>setForm(x=>({...x,type:t}))}
+                  className="flex-1 py-2 text-sm rounded-lg capitalize"
+                  style={{
+                    background:form.type===t?'rgba(91,110,249,0.2)':'rgba(255,255,255,0.04)',
+                    color:form.type===t?'#5b6ef9':'rgba(255,255,255,0.5)',
+                    border:form.type===t?'1px solid rgba(91,110,249,0.3)':'1px solid rgba(255,255,255,0.06)'
+                  }}>{t}</button>
+              ))}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={()=>setShowAdd(false)}
+              className="px-4 py-2 text-sm rounded-lg"
+              style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)' }}>Cancel</button>
+            <button onClick={handleAdd}
+              className="px-4 py-2 text-sm font-semibold rounded-lg"
+              style={{ background:'#5b6ef9', color:'#fff' }}>Create List</button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={()=>setDeleteId(null)}
+        onConfirm={()=>{ listOps.del(deleteId!); setDeleteId(null); }}
+        title="Delete List"
+        message="Are you sure you want to delete this list?"
+        confirmLabel="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -1,178 +1,305 @@
 import { useState } from 'react';
-import { Search, Filter, Upload, Plus, Zap, CheckCircle, XCircle } from 'lucide-react';
-import { contacts, accounts } from '../data/sampleData';
+import { useApp } from '../context/AppContext';
+import { Plus, Search, Trash2, Mail, Building2, Download, Users } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import type { Contact } from '../types';
 
-const scoreStyle: Record<string, string> = {
-  hot:'bg-red-50 text-red-700 border border-red-200',
-  qualified:'bg-emerald-50 text-emerald-700 border border-emerald-200',
-  nurture:'bg-amber-50 text-amber-700 border border-amber-200',
-  review:'bg-blue-50 text-blue-700 border border-blue-200',
-  low_priority:'bg-gray-100 text-gray-500 border border-gray-200',
-  do_not_contact:'bg-red-100 text-red-500 border border-red-200',
-};
-const scoreLabel: Record<string, string> = { hot:'🔥 Hot', qualified:'✅ Qualified', nurture:'🌱 Nurture', review:'👁 Review', low_priority:'↓ Low', do_not_contact:'🚫 DNC' };
-const statusStyle: Record<string, string> = {
-  not_contacted:'bg-gray-100 text-gray-600', in_sequence:'bg-blue-50 text-blue-700',
-  replied:'bg-indigo-50 text-indigo-700', interested:'bg-emerald-50 text-emerald-700',
-  not_interested:'bg-gray-100 text-gray-400', unsubscribed:'bg-red-50 text-red-500', bounced:'bg-orange-50 text-orange-600',
-};
-const statusLabel: Record<string, string> = {
-  not_contacted:'Not Contacted', in_sequence:'In Sequence', replied:'Replied',
-  interested:'Interested', not_interested:'Not Interested', unsubscribed:'Unsubscribed', bounced:'Bounced',
-};
-const enrichStyle: Record<string, string> = {
-  enriched:'bg-emerald-50 text-emerald-700', partial:'bg-amber-50 text-amber-700',
-  pending:'bg-blue-50 text-blue-700', failed:'bg-red-50 text-red-600', not_enriched:'bg-gray-100 text-gray-500',
-};
+const STATUS_OPTS = ['not_contacted','in_sequence','replied','interested','not_interested','unsubscribed','bounced'] as const;
+const SOURCE_OPTS = ['Apollo','LinkedIn','Manual','Clearbit','Referral','Inbound'];
+
+function badge(status: string) {
+  const map: Record<string,string> = {
+    not_contacted:'bg-blue-500/15 text-blue-400',
+    in_sequence:'bg-indigo-500/15 text-indigo-400',
+    replied:'bg-emerald-500/15 text-emerald-400',
+    interested:'bg-purple-500/15 text-purple-400',
+    not_interested:'bg-gray-500/15 text-gray-400',
+    unsubscribed:'bg-gray-500/15 text-gray-400',
+    bounced:'bg-red-500/15 text-red-400',
+  };
+  return map[status] ?? 'bg-gray-500/15 text-gray-400';
+}
 
 export default function Leads() {
-  const [q, setQ] = useState('');
-  const [sel, setSel] = useState<string[]>([]);
-  const [filterScore, setFilterScore] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
+  const { contacts, contactOps, toast } = useApp();
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showAdd, setShowAdd] = useState(false);
+  const [deleteId, setDeleteId] = useState<string|null>(null);
+  const [form, setForm] = useState({ firstName:'', lastName:'', email:'', title:'', accountName:'', outreachStatus:'not_contacted' as typeof STATUS_OPTS[number], source:'Apollo', phone:'' });
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 15;
+
+  const getName = (c: Contact) => `${c.firstName} ${c.lastName}`;
 
   const filtered = contacts.filter(c => {
-    const match = !q || [c.firstName, c.lastName, c.title, c.accountName, c.email].join(' ').toLowerCase().includes(q.toLowerCase());
-    const sc = filterScore === 'all' || c.scoreLabel === filterScore;
-    const st = filterStatus === 'all' || c.outreachStatus === filterStatus;
-    return match && sc && st;
+    const q = search.toLowerCase();
+    const name = getName(c).toLowerCase();
+    const matchQ = !search || name.includes(q) || c.email.toLowerCase().includes(q) || c.accountName.toLowerCase().includes(q);
+    const matchS = statusFilter === 'all' || c.outreachStatus === statusFilter;
+    return matchQ && matchS;
   });
 
-  const toggle = (id: string) => setSel(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
-  const allSel = filtered.length > 0 && sel.length === filtered.length;
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page-1)*PER_PAGE, page*PER_PAGE);
+
+  const toggleSelect = (id: string) => {
+    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const toggleAll = () => {
+    if (selected.size === paginated.length) setSelected(new Set());
+    else setSelected(new Set(paginated.map(c => c.id)));
+  };
+
+  const handleAdd = () => {
+    if (!form.firstName || !form.email) { toast('error','First name and email required'); return; }
+    const now = new Date().toISOString();
+    contactOps.add({
+      id: crypto.randomUUID(),
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      title: form.title,
+      accountName: form.accountName,
+      accountId: '',
+      phone: form.phone,
+      outreachStatus: form.outreachStatus,
+      source: form.source,
+      department: '',
+      seniority: '',
+      emailVerified: false,
+      linkedin: '',
+      leadScore: 0,
+      scoreLabel: 'nurture',
+      personaType: '',
+      pipelineStage: 'new',
+      owner: 'Sarah Miller',
+      notes: '',
+      lastActivity: now,
+      enrichmentStatus: 'not_enriched',
+      createdAt: now,
+    });
+    setShowAdd(false);
+    setForm({ firstName:'', lastName:'', email:'', title:'', accountName:'', outreachStatus:'not_contacted', source:'Apollo', phone:'' });
+  };
+
+  const handleBulkDelete = () => {
+    selected.forEach(id => contactOps.del(id));
+    setSelected(new Set());
+    toast('success', `Deleted ${selected.size} leads`);
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 px-6 py-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Lead Sourcing</h1>
-            <p className="text-sm text-gray-500">Find, import, and manage your prospect pipeline.</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-              <Upload size={14} /> Import CSV
-            </button>
-            <button className="flex items-center gap-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg transition-colors">
-              <Plus size={14} /> Add Lead
-            </button>
-          </div>
+    <div className="p-6 animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-white">Leads</h1>
+          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{contacts.length} total leads</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-48 max-w-lg">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search by name, title, company, email…" className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <button onClick={() => setShowFilters(!showFilters)} className={`flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg border transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
-            <Filter size={14} /> Filters
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+            style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.5)', border:'1px solid rgba(255,255,255,0.08)' }}>
+            <Download size={13}/>Export
           </button>
-          {['hot','qualified','nurture'].map(s => (
-            <button key={s} onClick={() => setFilterScore(filterScore===s?'all':s)} className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors capitalize ${filterScore===s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}>
-              {s==='hot'?'🔥 ':s==='qualified'?'✅ ':'🌱 '}{s}
+          <button onClick={() => setShowAdd(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
+            style={{ background:'#5b6ef9', color:'#fff' }}>
+            <Plus size={13}/>Add Lead
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'rgba(255,255,255,0.3)' }} />
+          <input value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}
+            placeholder="Search leads..."
+            className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-60"
+            style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#fff' }} />
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {(['all',...STATUS_OPTS] as string[]).map(s => (
+            <button key={s} onClick={()=>{setStatusFilter(s);setPage(1);}}
+              className="text-xs px-3 py-1.5 rounded-lg capitalize transition-colors"
+              style={{
+                background: statusFilter===s?'rgba(91,110,249,0.2)':'rgba(255,255,255,0.04)',
+                color: statusFilter===s?'#5b6ef9':'rgba(255,255,255,0.4)',
+                border: statusFilter===s?'1px solid rgba(91,110,249,0.3)':'1px solid rgba(255,255,255,0.06)'
+              }}>
+              {s.replace('_',' ')}
             </button>
           ))}
-          {sel.length > 0 && (
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-sm text-gray-500">{sel.length} selected</span>
-              <button className="flex items-center gap-1.5 text-xs font-medium bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700"><Zap size={12} /> Enrich</button>
-              <button className="text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-100">Add to Campaign</button>
-              <button className="text-xs font-medium bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-50">Add to List</button>
-            </div>
-          )}
         </div>
-        {showFilters && (
-          <div className="grid grid-cols-4 gap-3 pt-2 border-t border-gray-100">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Score</label>
-              <select value={filterScore} onChange={e=>setFilterScore(e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="all">All Scores</option>
-                {['hot','qualified','nurture','review','low_priority'].map(s=><option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Outreach Status</label>
-              <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="w-full text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="all">All Statuses</option>
-                {['not_contacted','in_sequence','replied','interested','unsubscribed'].map(s=><option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <button onClick={()=>{setFilterScore('all');setFilterStatus('all');}} className="text-sm text-indigo-600 hover:text-indigo-700 underline">Clear filters</button>
-            </div>
-          </div>
+        {selected.size > 0 && (
+          <button onClick={handleBulkDelete}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg ml-auto"
+            style={{ background:'rgba(239,68,68,0.1)', color:'#ef4444', border:'1px solid rgba(239,68,68,0.2)' }}>
+            <Trash2 size={12}/>Delete {selected.size}
+          </button>
         )}
       </div>
 
-      {/* Table */}
-      <div className="flex-1 overflow-auto">
-        <table className="w-full text-sm min-w-[900px]">
-          <thead className="bg-gray-50 border-b border-gray-100 sticky top-0">
-            <tr>
-              <th className="w-10 py-3 px-4"><input type="checkbox" checked={allSel} onChange={()=>setSel(allSel?[]:filtered.map(c=>c.id))} className="rounded border-gray-300 text-indigo-600" /></th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Account</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Score</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Enrichment</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Activity</th>
+      <div className="rounded-xl overflow-hidden" style={{ border:'1px solid rgba(255,255,255,0.07)' }}>
+        <table className="w-full">
+          <thead>
+            <tr style={{ background:'rgba(255,255,255,0.03)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+              <th className="w-10 px-4 py-3">
+                <input type="checkbox" checked={selected.size===paginated.length && paginated.length>0} onChange={toggleAll}
+                  className="w-3.5 h-3.5 rounded" />
+              </th>
+              {['Name','Company','Status','Source','Email',''].map(h=>(
+                <th key={h} className="text-left text-[10px] font-semibold uppercase tracking-wider px-4 py-3"
+                  style={{ color:'rgba(255,255,255,0.3)' }}>{h}</th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50 bg-white">
-            {filtered.map(c => {
-              const acct = accounts.find(a=>a.id===c.accountId);
+          <tbody>
+            {paginated.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-16">
+                  <Users size={32} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
+                  <p className="text-sm font-medium" style={{ color:'rgba(255,255,255,0.3)' }}>No leads found</p>
+                  <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
+                    style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add your first lead</button>
+                </td>
+              </tr>
+            ) : paginated.map(c => {
+              const name = getName(c);
               return (
-                <tr key={c.id} className={`hover:bg-gray-50/80 cursor-pointer transition-colors ${sel.includes(c.id)?'bg-indigo-50/40':''}`}>
-                  <td className="py-3 px-4" onClick={e=>e.stopPropagation()}><input type="checkbox" checked={sel.includes(c.id)} onChange={()=>toggle(c.id)} className="rounded border-gray-300 text-indigo-600" /></td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{c.firstName[0]}{c.lastName[0]}</div>
-                      <div><p className="font-medium text-gray-900 text-sm">{c.firstName} {c.lastName}</p><p className="text-xs text-gray-500">{c.title}</p></div>
+                <tr key={c.id} className="group transition-colors"
+                  style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+                  <td className="px-4 py-3">
+                    <input type="checkbox" checked={selected.has(c.id)} onChange={()=>toggleSelect(c.id)}
+                      className="w-3.5 h-3.5 rounded" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+                        style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
+                        {c.firstName[0]}{c.lastName[0]}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{name}</p>
+                        <p className="text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>{c.title}</p>
+                      </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <p className="font-medium text-gray-800 text-sm">{c.accountName}</p>
-                    <p className="text-xs text-gray-400">{acct?.industry} · {acct?.employeeCount?.toLocaleString()} emp</p>
-                  </td>
-                  <td className="py-3 px-4">
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-gray-700 text-sm">{c.email}</span>
-                      {c.emailVerified ? <CheckCircle size={13} className="text-emerald-500 flex-shrink-0" /> : <XCircle size={13} className="text-gray-300 flex-shrink-0" />}
+                      <Building2 size={12} style={{ color:'rgba(255,255,255,0.3)' }} />
+                      <span className="text-sm" style={{ color:'rgba(255,255,255,0.7)' }}>{c.accountName}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${scoreStyle[c.scoreLabel]}`}>{scoreLabel[c.scoreLabel]}</span>
+                  <td className="px-4 py-3">
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${badge(c.outreachStatus)}`}>
+                      {c.outreachStatus.replace('_',' ')}
+                    </span>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusStyle[c.outreachStatus]}`}>{statusLabel[c.outreachStatus]}</span>
+                  <td className="px-4 py-3">
+                    <span className="text-xs" style={{ color:'rgba(255,255,255,0.4)' }}>{c.source}</span>
                   </td>
-                  <td className="py-3 px-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${enrichStyle[c.enrichmentStatus]}`}>{c.enrichmentStatus.replace('_',' ')}</span>
+                  <td className="px-4 py-3">
+                    <span className="text-xs" style={{ color:'rgba(255,255,255,0.5)' }}>{c.email}</span>
                   </td>
-                  <td className="py-3 px-4 text-xs text-gray-400">{c.lastActivity}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button className="w-6 h-6 flex items-center justify-center rounded"
+                        style={{ color:'rgba(255,255,255,0.4)' }}>
+                        <Mail size={12}/>
+                      </button>
+                      <button onClick={()=>setDeleteId(c.id)} className="w-6 h-6 flex items-center justify-center rounded"
+                        style={{ color:'rgba(255,255,255,0.4)' }}>
+                        <Trash2 size={12}/>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {filtered.length === 0 && (
-          <div className="text-center py-20">
-            <Search size={32} className="mx-auto text-gray-200 mb-3" />
-            <p className="text-gray-500 font-medium">No leads found</p>
-            <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters.</p>
-          </div>
-        )}
       </div>
 
-      {/* Footer */}
-      <div className="bg-white border-t border-gray-100 px-6 py-3 flex items-center justify-between">
-        <p className="text-sm text-gray-500">Showing <span className="font-semibold text-gray-900">{filtered.length}</span> of <span className="font-semibold">{contacts.length}</span> leads</p>
-        <div className="flex items-center gap-1">
-          {['1','2','3'].map((p,i) => <button key={p} className={`text-sm px-3 py-1.5 rounded border transition-colors ${i===0?'bg-indigo-50 border-indigo-300 text-indigo-700 font-medium':'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>{p}</button>)}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>
+            Showing {(page-1)*PER_PAGE+1}–{Math.min(page*PER_PAGE, filtered.length)} of {filtered.length}
+          </p>
+          <div className="flex items-center gap-1">
+            {Array.from({length:totalPages},(_,i)=>i+1).map(p=>(
+              <button key={p} onClick={()=>setPage(p)}
+                className="w-7 h-7 text-xs rounded"
+                style={{ background:p===page?'#5b6ef9':'rgba(255,255,255,0.05)', color:p===page?'#fff':'rgba(255,255,255,0.4)' }}>
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="Add New Lead" size="md">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              {label:'First Name *',key:'firstName',placeholder:'Jane'},
+              {label:'Last Name',key:'lastName',placeholder:'Smith'},
+              {label:'Email *',key:'email',placeholder:'jane@company.com'},
+              {label:'Job Title',key:'title',placeholder:'VP of Sales'},
+              {label:'Company',key:'accountName',placeholder:'Acme Corp'},
+              {label:'Phone',key:'phone',placeholder:'+1 (415) 555-0100'},
+            ].map(f=>(
+              <div key={f.key}>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color:'rgba(255,255,255,0.4)' }}>{f.label}</label>
+                <input placeholder={f.placeholder}
+                  value={(form as any)[f.key]} onChange={e=>setForm(x=>({...x,[f.key]:e.target.value}))}
+                  className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                  style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+                style={{ color:'rgba(255,255,255,0.4)' }}>Status</label>
+              <select value={form.outreachStatus} onChange={e=>setForm(x=>({...x,outreachStatus:e.target.value as any}))}
+                className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                style={{ background:'#1a1a1a', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+                {STATUS_OPTS.map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+                style={{ color:'rgba(255,255,255,0.4)' }}>Source</label>
+              <select value={form.source} onChange={e=>setForm(x=>({...x,source:e.target.value}))}
+                className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                style={{ background:'#1a1a1a', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+                {SOURCE_OPTS.map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={()=>setShowAdd(false)}
+              className="px-4 py-2 text-sm rounded-lg"
+              style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)' }}>Cancel</button>
+            <button onClick={handleAdd}
+              className="px-4 py-2 text-sm font-semibold rounded-lg"
+              style={{ background:'#5b6ef9', color:'#fff' }}>Add Lead</button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={()=>setDeleteId(null)}
+        onConfirm={()=>{ contactOps.del(deleteId!); setDeleteId(null); }}
+        title="Delete Lead"
+        message="Are you sure you want to delete this lead? This action cannot be undone."
+        confirmLabel="Delete Lead"
+        variant="danger"
+      />
     </div>
   );
 }

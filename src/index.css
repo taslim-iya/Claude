@@ -2,23 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-feature-settings: 'ss01', 'cv01'; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #0a0a0a;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.012em;
+  }
+  ::selection { background: rgba(91,110,249,0.35); color: #fff; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+  input, textarea, select { font-family: inherit; letter-spacing: inherit; }
+  input::placeholder, textarea::placeholder { color: #52525b; }
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+@layer components {
+  .card {
+    @apply bg-[#111111] border border-[#1e1e1e] rounded-xl;
+  }
+  .card-hover {
+    @apply bg-[#111111] border border-[#1e1e1e] rounded-xl hover:border-[#2a2a2a] transition-colors duration-150;
+  }
+  .glass {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(12px);
+  }
+  .input-dark {
+    @apply w-full bg-[#111] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm text-white placeholder-[#52525b] outline-none transition-all duration-150;
+    &:focus { border-color: #5b6ef9; box-shadow: 0 0 0 3px rgba(91,110,249,0.1); }
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-[#5b6ef9] hover:bg-[#4a5cf7] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-all duration-150 cursor-pointer select-none;
+    &:active { transform: scale(0.97); }
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#222] border border-[#2a2a2a] hover:border-[#333] text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-all duration-150 cursor-pointer select-none;
+    &:active { transform: scale(0.97); }
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 hover:bg-[#1a1a1a] text-[#a1a1aa] hover:text-white text-sm font-medium px-3 py-2 rounded-lg transition-all duration-150 cursor-pointer select-none;
+  }
+  .btn-danger {
+    @apply inline-flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-sm font-medium px-3.5 py-2 rounded-lg transition-all duration-150 cursor-pointer select-none;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium leading-none;
+  }
+  .page-wrap { @apply p-6 max-w-[1400px] mx-auto; }
+  .page-header {
+    @apply flex items-center justify-between px-6 py-4 border-b border-[#1a1a1a] sticky top-0 z-10 bg-[#0a0a0a];
+  }
+  .th { @apply text-left py-3 px-4 text-xs font-semibold text-[#52525b] uppercase tracking-wider border-b border-[#1a1a1a]; }
+  .td { @apply py-3 px-4 text-sm border-b border-[#111] text-[#e4e4e7]; }
+  .tr { @apply hover:bg-[#111] transition-colors duration-100 cursor-pointer; }
+  .section-title { @apply text-xs font-semibold text-[#52525b] uppercase tracking-widest; }
+  .kbd {
+    @apply inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-[#1a1a1a] border border-[#2a2a2a] rounded text-[#71717a];
+  }
+  .divider { @apply border-t border-[#1a1a1a]; }
+}
 
-.sidebar-link {
-  @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors;
-}
-.sidebar-link.active {
-  @apply bg-indigo-600 text-white;
-}
-.sidebar-link:not(.active) {
-  @apply text-slate-400 hover:bg-slate-800 hover:text-slate-100;
-}
+/* Smooth transitions for all interactive elements */
+button, a, input, select, textarea { transition-timing-function: cubic-bezier(0.16,1,0.3,1); }
+
+/* Remove default select arrow styling */
+select { appearance: none; -webkit-appearance: none; }
+
+/* Focus visible ring */
+:focus-visible { outline: 2px solid rgba(91,110,249,0.5); outline-offset: 2px; }
+
+/* Drag over state */
+.drag-over { background: rgba(91,110,249,0.05); border-color: rgba(91,110,249,0.3) !important; }
