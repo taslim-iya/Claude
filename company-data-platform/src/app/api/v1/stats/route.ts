@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
       uniqueIndustries: industriesCount.length,
       withWebsite,
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
     return errorResponse('Internal server error', 500);
   }
 }

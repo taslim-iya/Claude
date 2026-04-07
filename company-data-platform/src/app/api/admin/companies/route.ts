@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     if (err instanceof Error && err.message === 'Forbidden') return errorResponse('Forbidden', 403);
     return errorResponse('Internal server error', 500);
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
 
     return jsonResponse(company, 201);
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     if (err instanceof Error && err.message === 'Forbidden') return errorResponse('Forbidden', 403);
     return errorResponse('Internal server error', 500);

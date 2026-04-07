@@ -29,6 +29,7 @@ export async function POST(
 
     return jsonResponse({ success: true });
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }

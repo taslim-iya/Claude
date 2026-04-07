@@ -39,6 +39,7 @@ export async function GET(
     if (!client) return errorResponse('Client not found', 404);
     return jsonResponse(client);
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }
@@ -90,6 +91,7 @@ export async function PUT(
 
     return jsonResponse(updated);
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }

@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
       clientCriteria: client.clientCriteria,
     }, 201);
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }

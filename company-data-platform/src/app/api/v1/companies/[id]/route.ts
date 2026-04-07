@@ -46,7 +46,8 @@ export async function GET(
 
     await logApiUsage(apiKey.user.id, apiKey.id, `/api/v1/companies/${id}`, 'GET', 200, responseTime, request);
     return jsonResponse(company);
-  } catch {
+  } catch (error) {
+    console.error(error);
     const responseTime = Date.now() - start;
     await logApiUsage(apiKey.user.id, apiKey.id, `/api/v1/companies/unknown`, 'GET', 500, responseTime, request);
     return errorResponse('Internal server error', 500);

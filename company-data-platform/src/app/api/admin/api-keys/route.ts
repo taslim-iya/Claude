@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
 
     return jsonResponse({ data: keys });
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
       message: 'Store this API key securely. It will not be shown again.',
     }, 201);
   } catch (err) {
+    console.error(err);
     if (err instanceof Error && err.message === 'Unauthorized') return errorResponse('Unauthorized', 401);
     return errorResponse('Internal server error', 500);
   }

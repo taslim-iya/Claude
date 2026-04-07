@@ -75,7 +75,8 @@ export async function POST(request: NextRequest) {
       data: companies,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
     const responseTime = Date.now() - start;
     await logApiUsage(apiKey.user.id, apiKey.id, '/api/v1/search', 'POST', 500, responseTime, request);
     return errorResponse('Internal server error', 500);

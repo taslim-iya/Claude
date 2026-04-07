@@ -49,7 +49,8 @@ export async function POST(request: Request) {
         role: user.role,
       },
     }, 201);
-  } catch {
+  } catch (error) {
+    console.error(error);
     return errorResponse('Internal server error', 500);
   }
 }
