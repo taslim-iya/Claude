@@ -64,6 +64,7 @@ function CampaignCalendar({ campaigns }: { campaigns: ReturnType<typeof useApp>[
         {cells.map((day, i) => {
           const isToday = day===today.getDate() && month===today.getMonth() && year===today.getFullYear();
           const dayCampaigns = day ? campaigns.filter((_,ci)=>(ci+day)%7===0 && (ci%daysInMonth)+1===day).slice(0,2) : [];
+          void dayCampaigns;
           return (
             <div key={i} className="rounded-lg p-1.5 min-h-[70px]"
               style={{ background: day?'var(--surface)':'transparent', border: day?'1px solid var(--border)':'none' }}>
@@ -87,6 +88,8 @@ function CampaignCalendar({ campaigns }: { campaigns: ReturnType<typeof useApp>[
   );
 }
 
+const PER_PAGE = 20;
+
 export default function Campaigns() {
   const { campaigns, campaignOps, toast } = useApp();
   const [tab, setTab] = useState<'list'|'calendar'>('list');
@@ -94,11 +97,33 @@ export default function Campaigns() {
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string|null>(null);
   const [form, setForm] = useState({ name:'', channel:'email', status:'draft' as CampaignStatus, goal:'', targetList:'' });
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [hoveredId, setHoveredId] = useState<string|null>(null);
 
   const filtered = campaigns.filter(c => {
     const q = search.toLowerCase();
     return !search || c.name.toLowerCase().includes(q);
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
+  const allChecked = paginated.length > 0 && paginated.every(c => selected.has(c.id));
+  const toggleAll = () => {
+    if (allChecked) {
+      setSelected(s => { const n = new Set(s); paginated.forEach(c => n.delete(c.id)); return n; });
+    } else {
+      setSelected(s => { const n = new Set(s); paginated.forEach(c => n.add(c.id)); return n; });
+    }
+  };
+  const toggleSelect = (id: string) => {
+    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+
+  const start = filtered.length === 0 ? 0 : (safePage - 1) * PER_PAGE + 1;
+  const end = Math.min(safePage * PER_PAGE, filtered.length);
 
   const handleAdd = () => {
     if (!form.name) { toast('error','Campaign name required'); return; }
@@ -142,7 +167,7 @@ export default function Campaigns() {
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
-            <input value={search} onChange={e=>setSearch(e.target.value)}
+            <input value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }}
               placeholder="Search campaigns..."
               className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-52"
               style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
@@ -196,76 +221,125 @@ export default function Campaigns() {
           style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
           <CampaignCalendar campaigns={campaigns} />
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-20">
-          <Mail size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
-          <p className="text-sm" style={{ color:'var(--text-3)' }}>No campaigns yet</p>
-          <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
-            style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Create your first campaign</button>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map(c => (
-            <div key={c.id} className="rounded-xl p-5 group transition-all hover:shadow-glass"
-              style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background:'rgba(91,110,249,0.12)' }}>
-                    <Mail size={15} style={{ color:'#5b6ef9' }} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-semibold" style={{ color:'var(--text)' }}>{c.name}</h3>
-                      {c.status !== 'draft' && (() => {
-                        const hs = healthScore(c.openRate||0, c.replyRate||0, c.emailsSent||0);
-                        const hsColor = hs >= 70 ? '#10b981' : hs >= 50 ? '#f59e0b' : hs > 0 ? '#ef4444' : 'var(--text-3)';
-                        return hs > 0 ? (
-                          <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded"
-                            title={`AI Health Score: ${hs}/100`}
-                            style={{ background:`${hsColor}15`, color:hsColor }}>
-                            <Brain size={9}/>AI {hs}
+        <>
+          <div className="rounded-xl overflow-x-auto" style={{ border:'1px solid var(--border)' }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background:'var(--surface-2)', borderBottom:'1px solid var(--border)' }}>
+                  <th className="w-10 px-4 py-3">
+                    <input type="checkbox" className="w-3.5 h-3.5 rounded" checked={allChecked} onChange={toggleAll} />
+                  </th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Campaign</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Channel</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Sent</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Opens %</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Replies %</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>AI Health</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Created</th>
+                  <th className="w-16 px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="text-center py-16">
+                      <Mail size={32} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
+                      <p className="text-sm" style={{ color:'var(--text-3)' }}>
+                        {search ? 'No campaigns match your search' : 'No campaigns yet'}
+                      </p>
+                      {!search && (
+                        <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
+                          style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Create your first campaign</button>
+                      )}
+                    </td>
+                  </tr>
+                ) : paginated.map(c => {
+                  const hs = healthScore(c.openRate||0, c.replyRate||0, c.emailsSent||0);
+                  const hsColor = hs >= 70 ? '#10b981' : hs >= 50 ? '#f59e0b' : hs > 0 ? '#ef4444' : 'var(--text-3)';
+                  return (
+                    <tr key={c.id} className="group transition-colors"
+                      style={{ borderBottom:'1px solid var(--border)', background: hoveredId===c.id ? 'var(--surface-2)' : 'transparent' }}
+                      onMouseEnter={()=>setHoveredId(c.id)}
+                      onMouseLeave={()=>setHoveredId(null)}>
+                      <td className="w-10 px-4 py-3">
+                        <input type="checkbox" className="w-3.5 h-3.5 rounded" checked={selected.has(c.id)} onChange={()=>toggleSelect(c.id)} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold" style={{ color:'var(--text)' }}>{c.name}</span>
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${statusBadge(c.status)}`}>{c.status}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px] capitalize" style={{ color:'var(--text-2)' }}>{c.channel}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{c.emailsSent||0}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{c.openRate||0}%</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{c.replyRate||0}%</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {hs > 0 ? (
+                          <span className="flex items-center gap-1 text-[13px] font-semibold" style={{ color:hsColor }}>
+                            <Brain size={9}/>{hs}
                           </span>
-                        ) : null;
-                      })()}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(c.status)}`}>{c.status}</span>
-                      <span className="text-[11px]" style={{ color:'var(--text-3)' }}>{c.channel}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {(c.status === 'active' || c.status === 'paused') && (
-                    <button onClick={()=>toggleStatus(c.id, c.status)}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
-                      style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>
-                      {c.status === 'active' ? <><Pause size={11}/>Pause</> : <><Play size={11}/>Resume</>}
-                    </button>
-                  )}
-                  <button onClick={()=>setDeleteId(c.id)}
-                    className="w-7 h-7 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ color:'var(--text-3)' }}>
-                    <Trash2 size={13}/>
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-4">
-                {[
-                  {label:'Contacts',value:c.contactCount||0},
-                  {label:'Sent',value:c.emailsSent||0},
-                  {label:'Open Rate',value:`${c.openRate||0}%`},
-                  {label:'Reply Rate',value:`${c.replyRate||0}%`},
-                ].map(m=>(
-                  <div key={m.label}>
-                    <p className="text-xs mb-0.5" style={{ color:'var(--text-3)' }}>{m.label}</p>
-                    <p className="text-base font-bold" style={{ color:"var(--text)" }}>{m.value}</p>
-                  </div>
+                        ) : (
+                          <span style={{ color:'var(--text-3)' }}>—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-[13px]" style={{ color:'var(--text-2)' }}>
+                          {new Date(c.createdAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {(c.status === 'active' || c.status === 'paused') && (
+                            <button onClick={()=>toggleStatus(c.id, c.status)}
+                              className="w-7 h-7 flex items-center justify-center rounded"
+                              style={{ color:'var(--text-3)' }}
+                              title={c.status === 'active' ? 'Pause' : 'Resume'}>
+                              {c.status === 'active' ? <Pause size={13}/> : <Play size={13}/>}
+                            </button>
+                          )}
+                          <button onClick={()=>setDeleteId(c.id)}
+                            className="w-7 h-7 flex items-center justify-center rounded"
+                            style={{ color:'var(--text-3)' }}>
+                            <Trash2 size={13}/>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {filtered.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-xs" style={{ color:'var(--text-3)' }}>
+                Showing {start}–{end} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={()=>setPage(p)}
+                    className="w-7 h-7 flex items-center justify-center rounded text-xs font-medium"
+                    style={{
+                      background: p === safePage ? 'rgba(91,110,249,0.2)' : 'transparent',
+                      color: p === safePage ? '#5b6ef9' : 'var(--text-2)',
+                      border: p === safePage ? '1px solid rgba(91,110,249,0.3)' : '1px solid transparent',
+                    }}>{p}</button>
                 ))}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="New Campaign" size="md">
