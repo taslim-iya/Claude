@@ -2,29 +2,45 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface Props {
-  open: boolean; onClose(): void; title: string; children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl'; footer?: React.ReactNode;
+  open: boolean;
+  onClose(): void;
+  title?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  children: React.ReactNode;
 }
-export default function Modal({ open, onClose, title, children, size = 'md', footer }: Props) {
+
+const sizes = { sm:'420px', md:'560px', lg:'720px', xl:'900px', '2xl':'1100px' };
+
+export default function Modal({ open, onClose, title, size = 'md', children }: Props) {
   useEffect(() => {
     if (!open) return;
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
+
   if (!open) return null;
-  const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl', xl: 'max-w-4xl' };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/70 animate-fade-in" />
-      <div className={`relative w-full ${widths[size]} bg-[#111] border border-[#2a2a2a] rounded-2xl shadow-modal animate-scale-in flex flex-col max-h-[90vh]`}
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#1a1a1a] flex-shrink-0">
-          <h3 className="font-semibold text-white text-sm">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[#1a1a1a] text-[#52525b] hover:text-white transition-colors"><X size={15} /></button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
-        {footer && <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[#1a1a1a] flex-shrink-0">{footer}</div>}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+      style={{ background: 'var(--modal-overlay)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="w-full animate-scale-in flex flex-col max-h-[90vh]"
+        style={{ maxWidth: sizes[size], background: 'var(--modal-bg)', border: '1px solid var(--border-2)', borderRadius: '1rem', boxShadow: 'var(--shadow-modal)' }}>
+        {title && (
+          <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+            style={{ borderBottom: '1px solid var(--border)' }}>
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{title}</h2>
+            <button onClick={onClose}
+              className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+              style={{ color: 'var(--text-3)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; }}>
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        <div className="overflow-y-auto p-5 flex-1">{children}</div>
       </div>
     </div>
   );

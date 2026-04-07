@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, Plus, ExternalLink, Zap, RefreshCw } from 'lucide-react';
+import { CheckCircle, Plus, ExternalLink, Zap, RefreshCw, Key, Coins, TestTube, Clock } from 'lucide-react';
 
 const integrations = [
   { id:'i1', name:'Apollo.io', category:'Enrichment', desc:'Source and enrich leads from Apollo\'s 260M+ contact database.', status:'connected', logo:'🔵', color:'bg-blue-500/10' },
@@ -20,14 +20,27 @@ const integrations = [
 
 const categories = ['All', ...new Set(integrations.map(i=>i.category))];
 
+const CREDITS: Record<string,number> = { i1:4820, i2:9150, i3:1200 };
+const SYNC_OPTIONS = ['Real-time','Every 15 min','Hourly','Daily'];
+
 export default function Integrations() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [statuses, setStatuses] = useState<Record<string,string>>({});
+  const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
+  const [showKey, setShowKey] = useState<Record<string,boolean>>({});
+  const [syncFreq, setSyncFreq] = useState<Record<string,string>>({});
+  const [testing, setTesting] = useState<string|null>(null);
+  const [testResult, setTestResult] = useState<Record<string,boolean>>({});
 
   const getStatus = (i: typeof integrations[0]) => statuses[i.id] ?? i.status;
   const toggle = (id: string, current: string) => setStatuses(s => ({...s, [id]: current==='connected'?'disconnected':'connected'}));
   const shown = activeCategory==='All' ? integrations : integrations.filter(i=>i.category===activeCategory);
   const connected = integrations.filter(i=>getStatus(i)==='connected').length;
+
+  const testConnection = (id: string) => {
+    setTesting(id);
+    setTimeout(()=>{ setTesting(null); setTestResult(s=>({...s,[id]:true})); setTimeout(()=>setTestResult(s=>({...s,[id]:false})),3000); }, 1500);
+  };
 
   return (
     <div className="p-6 max-w-4xl animate-fade-in">
@@ -88,10 +101,62 @@ export default function Integrations() {
               </div>
               <p className="text-xs leading-relaxed" style={{ color:'rgba(255,255,255,0.45)' }}>{i.desc}</p>
               {status==='connected' && (
-                <div className="mt-3 pt-3 flex items-center justify-between text-xs"
-                  style={{ borderTop:'1px solid rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.35)' }}>
-                  <span className="flex items-center gap-1"><RefreshCw size={10}/>Synced 2h ago</span>
-                  <button className="flex items-center gap-1" style={{ color:'#5b6ef9' }}><ExternalLink size={10}/>Settings</button>
+                <div className="mt-3 pt-3 space-y-3"
+                  style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+                  {/* API Key field */}
+                  <div>
+                    <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider mb-1.5"
+                      style={{ color:'rgba(255,255,255,0.3)' }}>
+                      <Key size={9}/>API Key
+                    </label>
+                    <div className="flex gap-1.5">
+                      <input
+                        type={showKey[i.id]?'text':'password'}
+                        value={apiKeys[i.id]??'sk-demo-key-xxxxxxxxxxxxxxxx'}
+                        onChange={e=>setApiKeys(s=>({...s,[i.id]:e.target.value}))}
+                        className="flex-1 text-xs px-2.5 py-1.5 rounded-lg outline-none font-mono"
+                        style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.7)' }}
+                      />
+                      <button onClick={()=>setShowKey(s=>({...s,[i.id]:!s[i.id]}))}
+                        className="text-[10px] px-2 rounded-lg"
+                        style={{ background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.07)' }}>
+                        {showKey[i.id]?'Hide':'Show'}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Credits (enrichment only) */}
+                  {CREDITS[i.id] !== undefined && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Coins size={11} style={{ color:'#f59e0b' }}/>
+                      <span style={{ color:'rgba(255,255,255,0.5)' }}>Credits:</span>
+                      <span className="font-semibold text-white">{CREDITS[i.id].toLocaleString()}</span>
+                      <span style={{ color:'rgba(255,255,255,0.3)' }}>remaining</span>
+                    </div>
+                  )}
+                  {/* Sync frequency */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>
+                      <Clock size={10}/>
+                      <select value={syncFreq[i.id]??'Hourly'}
+                        onChange={e=>setSyncFreq(s=>({...s,[i.id]:e.target.value}))}
+                        className="text-[11px] outline-none"
+                        style={{ background:'transparent', color:'rgba(255,255,255,0.5)', border:'none' }}>
+                        {SYNC_OPTIONS.map(o=><option key={o} value={o} style={{background:'#1a1a1a'}}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {testResult[i.id] && (
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400">
+                          <CheckCircle size={10}/>Connected
+                        </span>
+                      )}
+                      <button onClick={()=>testConnection(i.id)} disabled={testing===i.id}
+                        className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors"
+                        style={{ background:'rgba(91,110,249,0.1)', color:'#5b6ef9', border:'1px solid rgba(91,110,249,0.15)' }}>
+                        {testing===i.id?<><RefreshCw size={9} className="animate-spin"/>Testing…</>:<><TestTube size={9}/>Test</>}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

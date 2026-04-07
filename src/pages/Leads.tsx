@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Search, Trash2, Mail, Building2, Download, Users } from 'lucide-react';
+import { Plus, Search, Trash2, Mail, Building2, Download, Users, Sparkles, Upload } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import ExportModal from '../components/ui/ExportModal';
+import EnrichmentModal from '../components/ui/EnrichmentModal';
+import ImportLeadsModal from '../components/ui/ImportLeadsModal';
 import type { Contact } from '../types';
 
 const STATUS_OPTS = ['not_contacted','in_sequence','replied','interested','not_interested','unsubscribed','bounced'] as const;
@@ -28,6 +31,9 @@ export default function Leads() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string|null>(null);
+  const [showExport, setShowExport] = useState(false);
+  const [showEnrich, setShowEnrich] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [form, setForm] = useState({ firstName:'', lastName:'', email:'', title:'', accountName:'', outreachStatus:'not_contacted' as typeof STATUS_OPTS[number], source:'Apollo', phone:'' });
   const [page, setPage] = useState(1);
   const PER_PAGE = 15;
@@ -99,7 +105,18 @@ export default function Leads() {
           <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>{contacts.length} total leads</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+          <button onClick={()=>setShowImport(true)}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+            style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.5)', border:'1px solid rgba(255,255,255,0.08)' }}>
+            <Upload size={13}/>Import
+          </button>
+          <button onClick={()=>setShowEnrich(true)}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+            style={{ background:'rgba(139,92,246,0.12)', color:'#a78bfa', border:'1px solid rgba(139,92,246,0.2)' }}>
+            <Sparkles size={13}/>Enrich
+          </button>
+          <button onClick={()=>setShowExport(true)}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
             style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.5)', border:'1px solid rgba(255,255,255,0.08)' }}>
             <Download size={13}/>Export
           </button>
@@ -149,7 +166,7 @@ export default function Leads() {
                 <input type="checkbox" checked={selected.size===paginated.length && paginated.length>0} onChange={toggleAll}
                   className="w-3.5 h-3.5 rounded" />
               </th>
-              {['Name','Company','Status','Source','Email',''].map(h=>(
+              {['Name','Company','Status','Enriched','Source','Email',''].map(h=>(
                 <th key={h} className="text-left text-[10px] font-semibold uppercase tracking-wider px-4 py-3"
                   style={{ color:'rgba(255,255,255,0.3)' }}>{h}</th>
               ))}
@@ -158,7 +175,7 @@ export default function Leads() {
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-16">
+                <td colSpan={8} className="text-center py-16">
                   <Users size={32} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
                   <p className="text-sm font-medium" style={{ color:'rgba(255,255,255,0.3)' }}>No leads found</p>
                   <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
@@ -196,6 +213,15 @@ export default function Leads() {
                     <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${badge(c.outreachStatus)}`}>
                       {c.outreachStatus.replace('_',' ')}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {c.enrichmentStatus === 'enriched' ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400">Enriched</span>
+                    ) : c.enrichmentStatus === 'pending' ? (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400">Pending…</span>
+                    ) : (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full" style={{ color:'rgba(255,255,255,0.2)' }}>—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs" style={{ color:'rgba(255,255,255,0.4)' }}>{c.source}</span>
@@ -299,6 +325,26 @@ export default function Leads() {
         message="Are you sure you want to delete this lead? This action cannot be undone."
         confirmLabel="Delete Lead"
         variant="danger"
+      />
+
+      <ExportModal
+        open={showExport}
+        onClose={()=>setShowExport(false)}
+        leads={contacts}
+        selectedIds={selected}
+        totalCount={contacts.length}
+      />
+
+      <EnrichmentModal
+        open={showEnrich}
+        onClose={()=>setShowEnrich(false)}
+        leads={contacts}
+        selectedIds={selected}
+      />
+
+      <ImportLeadsModal
+        open={showImport}
+        onClose={()=>setShowImport(false)}
       />
     </div>
   );

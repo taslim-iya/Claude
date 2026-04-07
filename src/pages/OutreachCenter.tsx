@@ -1,14 +1,22 @@
 import { useState } from 'react';
-import { Mail, Reply, Star, Archive, ChevronRight, Search, Circle } from 'lucide-react';
+import { Mail, Reply, Star, Archive, Search, Brain, Calendar, XCircle, HelpCircle, TrendingUp, Settings, Plus, Trash2 } from 'lucide-react';
 
 const threads = [
-  { id:'t1', name:'Jordan Lee', company:'Stripe', title:'Head of Growth', email:'jordan@stripe.com', subject:'Re: Quick question about growth', preview:'Thanks for reaching out! I\'d love to learn more about your platform...', time:'2m ago', status:'replied', unread:true, avatar:'JL', starred:true },
-  { id:'t2', name:'Emily Chen', company:'Notion', title:'VP Engineering', email:'emily@notion.so', subject:'Re: ProspectIQ demo request', preview:'Hi Sarah, thanks for the follow-up. Could we schedule a 30-minute call...', time:'1h ago', status:'interested', unread:true, avatar:'EC', starred:false },
-  { id:'t3', name:'Marcus Davis', company:'Figma', title:'Director of Sales', email:'marcus@figma.com', subject:'Quick question about Figma', preview:'Hey Marcus, I noticed that Figma has been expanding its sales team...', time:'3h ago', status:'sent', unread:false, avatar:'MD', starred:false },
-  { id:'t4', name:'Priya Patel', company:'Linear', title:'CEO', email:'priya@linear.app', subject:'Following up', preview:'Hi Priya, just circling back on my previous email about...', time:'Yesterday', status:'opened', unread:false, avatar:'PP', starred:true },
-  { id:'t5', name:'Alex Thompson', company:'Vercel', title:'CTO', email:'alex@vercel.com', subject:'Q2 SaaS Outreach', preview:'Hi Alex, I\'d love to discuss how ProspectIQ can help Vercel...', time:'2 days ago', status:'sent', unread:false, avatar:'AT', starred:false },
-  { id:'t6', name:'Sophie Wang', company:'Loom', title:'VP Product', email:'sophie@loom.com', subject:'Meeting request', preview:'Sophie, I noticed you recently launched a new feature...', time:'2 days ago', status:'bounced', unread:false, avatar:'SW', starred:false },
+  { id:'t1', name:'Jordan Lee', company:'Stripe', title:'Head of Growth', email:'jordan@stripe.com', subject:'Re: Quick question about growth', preview:'Thanks for reaching out! I\'d love to learn more about your platform...', time:'2m ago', status:'replied', unread:true, avatar:'JL', starred:true, aiClass:'interested' },
+  { id:'t2', name:'Emily Chen', company:'Notion', title:'VP Engineering', email:'emily@notion.so', subject:'Re: ProspectIQ demo request', preview:'Hi Sarah, thanks for the follow-up. Could we schedule a 30-minute call...', time:'1h ago', status:'interested', unread:true, avatar:'EC', starred:false, aiClass:'meeting_request' },
+  { id:'t3', name:'Marcus Davis', company:'Figma', title:'Director of Sales', email:'marcus@figma.com', subject:'Quick question about Figma', preview:'Hey Marcus, I noticed that Figma has been expanding its sales team...', time:'3h ago', status:'sent', unread:false, avatar:'MD', starred:false, aiClass:null },
+  { id:'t4', name:'Priya Patel', company:'Linear', title:'CEO', email:'priya@linear.app', subject:'Following up', preview:'Hi Priya, just circling back on my previous email about...', time:'Yesterday', status:'opened', unread:false, avatar:'PP', starred:true, aiClass:'out_of_office' },
+  { id:'t5', name:'Alex Thompson', company:'Vercel', title:'CTO', email:'alex@vercel.com', subject:'Q2 SaaS Outreach', preview:'Hi Alex, I\'d love to discuss how ProspectIQ can help Vercel...', time:'2 days ago', status:'sent', unread:false, avatar:'AT', starred:false, aiClass:null },
+  { id:'t6', name:'Sophie Wang', company:'Loom', title:'VP Product', email:'sophie@loom.com', subject:'Meeting request', preview:'Sophie, I noticed you recently launched a new feature...', time:'2 days ago', status:'bounced', unread:false, avatar:'SW', starred:false, aiClass:'not_interested' },
 ];
+
+const AI_CLASS_LABELS: Record<string,{label:string,color:string,bg:string,Icon:React.ElementType}> = {
+  interested:      { label:'Interested',       color:'#10b981', bg:'rgba(16,185,129,0.12)',   Icon:TrendingUp },
+  meeting_request: { label:'Meeting Request',   color:'#5b6ef9', bg:'rgba(91,110,249,0.12)',  Icon:Calendar },
+  out_of_office:   { label:'Out of Office',     color:'#f59e0b', bg:'rgba(245,158,11,0.12)',  Icon:Archive },
+  not_interested:  { label:'Not Interested',    color:'#ef4444', bg:'rgba(239,68,68,0.12)',   Icon:XCircle },
+  question:        { label:'Question',          color:'#a78bfa', bg:'rgba(167,139,250,0.12)', Icon:HelpCircle },
+};
 
 const statusBadge: Record<string,{label:string,color:string,bg:string}> = {
   replied:  { label:'Replied',   color:'#10b981', bg:'rgba(16,185,129,0.12)' },
@@ -18,12 +26,20 @@ const statusBadge: Record<string,{label:string,color:string,bg:string}> = {
   bounced:  { label:'Bounced',   color:'#ef4444', bg:'rgba(239,68,68,0.12)' },
 };
 
+type RoutingRule = { id: string; trigger: string; action: string; };
+
 export default function OutreachCenter() {
   const [selectedId, setSelectedId] = useState<string|null>('t1');
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [reply, setReply] = useState('');
   const [starred, setStarred] = useState<Set<string>>(new Set(threads.filter(t=>t.starred).map(t=>t.id)));
+  const [showRouting, setShowRouting] = useState(false);
+  const [rules, setRules] = useState<RoutingRule[]>([
+    { id:'r1', trigger:'meeting_request', action:'Notify on Slack + Add to Hot Leads' },
+    { id:'r2', trigger:'not_interested',  action:'Unsubscribe + Move to Cold' },
+    { id:'r3', trigger:'out_of_office',   action:'Pause sequence for 7 days' },
+  ]);
 
   const filters = ['all','replied','interested','opened','sent','bounced'];
 
@@ -80,7 +96,18 @@ export default function OutreachCenter() {
                     <span className="text-[10px] flex-shrink-0" style={{ color:'rgba(255,255,255,0.3)' }}>{t.time}</span>
                   </div>
                   <p className="text-[10px] mt-0.5 truncate" style={{ color:'rgba(255,255,255,0.4)' }}>{t.subject}</p>
-                  <p className="text-[10px] mt-0.5 truncate" style={{ color:'rgba(255,255,255,0.3)' }}>{t.preview}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {t.aiClass && AI_CLASS_LABELS[t.aiClass] && (() => {
+                      const cls = AI_CLASS_LABELS[t.aiClass!]!;
+                      const Icon = cls.Icon;
+                      return (
+                        <span className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          style={{ background:cls.bg, color:cls.color }}>
+                          <Brain size={8}/>{cls.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
                 </div>
               </div>
             );
@@ -108,6 +135,21 @@ export default function OutreachCenter() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {selected.aiClass && AI_CLASS_LABELS[selected.aiClass] && (() => {
+                const cls = AI_CLASS_LABELS[selected.aiClass!]!;
+                const Icon = cls.Icon;
+                return (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background:cls.bg, color:cls.color }}>
+                    <Brain size={11}/>{cls.label}
+                  </span>
+                );
+              })()}
+              <button onClick={()=>setShowRouting(v=>!v)}
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors"
+                style={{ background:showRouting?'rgba(91,110,249,0.2)':'rgba(255,255,255,0.06)', color:showRouting?'#5b6ef9':'rgba(255,255,255,0.5)' }}>
+                <Settings size={12}/>Routes
+              </button>
               <button onClick={()=>setStarred(s=>{const n=new Set(s);n.has(selected.id)?n.delete(selected.id):n.add(selected.id);return n;})}
                 style={{ color:starred.has(selected.id)?'#f59e0b':'rgba(255,255,255,0.3)' }}>
                 <Star size={16} fill={starred.has(selected.id)?'#f59e0b':'none'}/>
@@ -147,6 +189,43 @@ export default function OutreachCenter() {
               </div>
             )}
           </div>
+
+          {/* Routing rules panel */}
+          {showRouting && (
+            <div className="mx-6 mb-4 rounded-xl overflow-hidden" style={{ border:'1px solid rgba(91,110,249,0.2)' }}>
+              <div className="flex items-center justify-between px-4 py-3"
+                style={{ background:'rgba(91,110,249,0.08)', borderBottom:'1px solid rgba(91,110,249,0.15)' }}>
+                <div className="flex items-center gap-2">
+                  <Brain size={13} style={{ color:'#5b6ef9' }}/>
+                  <p className="text-xs font-semibold text-white">Auto-Routing Rules</p>
+                </div>
+                <button onClick={()=>setRules(r=>[...r,{id:Date.now().toString(),trigger:'interested',action:'Notify on Slack'}])}
+                  className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded"
+                  style={{ background:'rgba(91,110,249,0.2)', color:'#5b6ef9' }}>
+                  <Plus size={10}/>Add Rule
+                </button>
+              </div>
+              <div className="divide-y" style={{ background:'rgba(255,255,255,0.02)', '--tw-divide-opacity':1 } as React.CSSProperties}>
+                {rules.map(rule=>(
+                  <div key={rule.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <select value={rule.trigger}
+                      onChange={e=>setRules(r=>r.map(x=>x.id===rule.id?{...x,trigger:e.target.value}:x))}
+                      className="text-xs px-2 py-1 rounded-lg outline-none"
+                      style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+                      {Object.entries(AI_CLASS_LABELS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                    <span className="text-xs" style={{ color:'rgba(255,255,255,0.3)' }}>→</span>
+                    <input value={rule.action}
+                      onChange={e=>setRules(r=>r.map(x=>x.id===rule.id?{...x,action:e.target.value}:x))}
+                      className="flex-1 text-xs px-2 py-1 rounded-lg outline-none"
+                      style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+                    <button onClick={()=>setRules(r=>r.filter(x=>x.id!==rule.id))}
+                      style={{ color:'rgba(255,255,255,0.2)' }}><Trash2 size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Reply composer */}
           <div className="p-4" style={{ borderTop:'1px solid rgba(255,255,255,0.07)' }}>

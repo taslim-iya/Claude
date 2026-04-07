@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Search, Trash2, Mail, Play, Pause, BarChart2, Users } from 'lucide-react';
+import { Plus, Search, Trash2, Mail, Play, Pause, BarChart2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+import SendingSchedule from '../components/ui/SendingSchedule';
 import type { CampaignStatus } from '../types';
 
 function statusBadge(status: string) {
@@ -16,8 +17,72 @@ function statusBadge(status: string) {
   return map[status] ?? 'bg-gray-500/15 text-gray-400';
 }
 
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function CampaignCalendar({ campaigns }: { campaigns: ReturnType<typeof useApp>['campaigns'] }) {
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const cells = Array.from({length: Math.ceil((firstDay + daysInMonth)/7)*7}, (_,i) => {
+    const d = i - firstDay + 1;
+    return (d >= 1 && d <= daysInMonth) ? d : null;
+  });
+
+  const prev = () => { if(month===0){setMonth(11);setYear(y=>y-1);}else setMonth(m=>m-1); };
+  const next = () => { if(month===11){setMonth(0);setYear(y=>y+1);}else setMonth(m=>m+1); };
+
+  const colors = ['#5b6ef9','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-semibold text-white">{MONTH_NAMES[month]} {year}</h2>
+        <div className="flex items-center gap-1">
+          <button onClick={prev} className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.5)' }}><ChevronLeft size={14}/></button>
+          <button onClick={next} className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+            style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.5)' }}><ChevronRight size={14}/></button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 mb-2">
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>(
+          <div key={d} className="text-center text-[10px] font-semibold uppercase tracking-wider py-1"
+            style={{ color:'rgba(255,255,255,0.3)' }}>{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {cells.map((day, i) => {
+          const isToday = day===today.getDate() && month===today.getMonth() && year===today.getFullYear();
+          const dayCampaigns = day ? campaigns.filter((_,ci)=>(ci+day)%7===0 && (ci%daysInMonth)+1===day).slice(0,2) : [];
+          return (
+            <div key={i} className="rounded-lg p-1.5 min-h-[70px]"
+              style={{ background: day?'rgba(255,255,255,0.03)':'transparent', border: day?'1px solid rgba(255,255,255,0.05)':'none' }}>
+              {day && (
+                <>
+                  <span className={`text-[11px] font-semibold w-5 h-5 flex items-center justify-center rounded-full mb-1 ${isToday?'text-white':'text-white/40'}`}
+                    style={{ background:isToday?'#5b6ef9':'transparent' }}>{day}</span>
+                  {campaigns.slice(0, Math.max(0, (day % 3))).map((c,ci)=>(
+                    <div key={c.id} className="text-[9px] px-1 py-0.5 rounded truncate mb-0.5"
+                      style={{ background:`${colors[ci%colors.length]}20`, color:colors[ci%colors.length] }}>
+                      {c.name}
+                    </div>
+                  )).slice(0,2)}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function Campaigns() {
   const { campaigns, campaignOps, toast } = useApp();
+  const [tab, setTab] = useState<'list'|'calendar'>('list');
   const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [deleteId, setDeleteId] = useState<string|null>(null);
@@ -75,6 +140,19 @@ export default function Campaigns() {
               className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-52"
               style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#fff' }} />
           </div>
+          <div className="flex items-center gap-1 rounded-lg p-0.5"
+            style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.07)' }}>
+            <button onClick={()=>setTab('list')}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+              style={{ background:tab==='list'?'rgba(91,110,249,0.2)':'transparent', color:tab==='list'?'#5b6ef9':'rgba(255,255,255,0.4)' }}>
+              <BarChart2 size={11}/>List
+            </button>
+            <button onClick={()=>setTab('calendar')}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+              style={{ background:tab==='calendar'?'rgba(91,110,249,0.2)':'transparent', color:tab==='calendar'?'#5b6ef9':'rgba(255,255,255,0.4)' }}>
+              <Calendar size={11}/>Calendar
+            </button>
+          </div>
           <button onClick={()=>setShowAdd(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
             style={{ background:'#5b6ef9', color:'#fff' }}>
@@ -106,7 +184,12 @@ export default function Campaigns() {
         })}
       </div>
 
-      {filtered.length === 0 ? (
+      {tab === 'calendar' ? (
+        <div className="rounded-xl p-5"
+          style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+          <CampaignCalendar campaigns={campaigns} />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <Mail size={36} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
           <p className="text-sm" style={{ color:'rgba(255,255,255,0.3)' }}>No campaigns yet</p>
@@ -200,6 +283,11 @@ export default function Campaigns() {
             <input placeholder="Book meetings with VP Sales at SaaS companies" value={form.goal} onChange={e=>setForm(x=>({...x,goal:e.target.value}))}
               className="w-full px-3 py-2 text-sm rounded-lg outline-none"
               style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider mb-3"
+              style={{ color:'rgba(255,255,255,0.4)' }}>Sending Schedule</p>
+            <SendingSchedule />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={()=>setShowAdd(false)}

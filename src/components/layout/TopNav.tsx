@@ -1,56 +1,59 @@
-import { Search, Bell, Plus, Command } from 'lucide-react';
+import { Search, Bell, Plus, Command, Sun, Moon } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 
-interface Props {
-  title?: string;
-}
-
-export default function TopNav({ title }: Props) {
+export default function TopNav() {
   const { setShowCmd } = useApp();
+  const { theme, toggle } = useTheme();
+
+  const btnStyle = {
+    color: 'var(--text-3)',
+    borderRadius: '0.5rem',
+  };
 
   return (
     <header className="flex items-center justify-between px-6 h-14 flex-shrink-0"
-      style={{ background: '#0d0d0d', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: 'var(--sidebar)', borderBottom: '1px solid var(--sidebar-border)' }}>
 
-      {title && (
-        <h1 className="text-sm font-semibold text-white">{title}</h1>
-      )}
+      <div className="flex-1" />
 
-      <div className="flex items-center gap-2 ml-auto">
-        {/* Cmd+K trigger */}
-        <button
-          onClick={() => setShowCmd(true)}
-          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition-colors"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.4)'; }}
-        >
+      <div className="flex items-center gap-1.5 ml-auto">
+        {/* Cmd+K search */}
+        <button onClick={() => setShowCmd(true)}
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition-all"
+          style={{ background: 'var(--surface-2)', color: 'var(--text-3)', border: '1px solid var(--border)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-2)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
           <Search size={12} />
           <span>Search...</span>
-          <span className="flex items-center gap-0.5 ml-2 font-mono text-[10px] px-1 py-0.5 rounded"
-            style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}>
+          <span className="flex items-center gap-0.5 ml-1 font-mono text-[10px] px-1 py-0.5 rounded"
+            style={{ background: 'var(--surface-3)', color: 'var(--text-3)' }}>
             <Command size={9} />K
           </span>
         </button>
 
-        {/* Notifications */}
-        <button className="relative w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-          style={{ color: 'rgba(255,255,255,0.45)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.8)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)'; }}>
-          <Bell size={15} />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full" style={{ background: '#5b6ef9' }} />
+        {/* Theme toggle */}
+        <button onClick={toggle}
+          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+          style={btnStyle}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; }}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </button>
 
-        {/* New lead shortcut */}
-        <button
-          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-          style={{ background: '#5b6ef9', color: '#fff' }}
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#4a5de8'}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#5b6ef9'}
-          title="Cmd+N">
-          <Plus size={13} />
-          New
+        {/* Notifications */}
+        <button className="relative w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+          style={btnStyle}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--text-3)'; }}>
+          <Bell size={15} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-accent" />
+        </button>
+
+        {/* New lead */}
+        <button className="btn-primary text-xs" title="Cmd+N">
+          <Plus size={13} />New
         </button>
       </div>
     </header>
