@@ -58,7 +58,7 @@ export default function Profile() {
           <Field label="Email" value={email} onChange={setEmail} />
           <Field label="Phone" value={phone} onChange={setPhone} />
         </div>
-        <button onClick={()=>toast('success','Profile saved')}
+        <button onClick={() => toast('success', 'Profile saved successfully ✓')}
           className="mt-4 flex items-center gap-1.5 text-xs font-semibold px-4 py-2.5 rounded-xl"
           style={{ background:'#5b6ef9', color:'var(--text)' }}>
           <Save size={13}/>Save Profile
@@ -117,7 +117,9 @@ export default function Profile() {
       <div className="rounded-xl p-6 mb-4" style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
         <h3 className="text-sm font-semibold  mb-4 flex items-center gap-2" style={{ color:"var(--text)" }}><Shield size={14}/>Security</h3>
         <div className="space-y-2">
-          <button className="w-full text-left flex items-center justify-between p-3 rounded-xl transition-colors"
+          <button
+            onClick={() => toast('info', 'Password change email sent')}
+            className="w-full text-left flex items-center justify-between p-3 rounded-xl transition-colors"
             style={{ background:'var(--surface)' }}
             onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='var(--surface-2)'}
             onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='var(--surface)'}>
@@ -127,7 +129,9 @@ export default function Profile() {
             </div>
             <span className="text-xs font-medium" style={{ color:'#5b6ef9' }}>Update →</span>
           </button>
-          <button className="w-full text-left flex items-center justify-between p-3 rounded-xl transition-colors"
+          <button
+            onClick={() => toast('info', '2FA setup instructions sent to your email')}
+            className="w-full text-left flex items-center justify-between p-3 rounded-xl transition-colors"
             style={{ background:'var(--surface)' }}
             onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='var(--surface-2)'}
             onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='var(--surface)'}>
@@ -142,6 +146,7 @@ export default function Profile() {
       </div>
 
       <div className="mt-8 pt-6" style={{ borderTop:'1px solid var(--border)' }}>
+        <h3 className="text-sm font-semibold mb-3" style={{ color:'var(--text)' }}>Account</h3>
         <button
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg"
           style={{ background:'rgba(239,68,68,0.1)', color:'#ef4444', border:'1px solid rgba(239,68,68,0.2)' }}
