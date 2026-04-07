@@ -8,7 +8,7 @@ const roleColors: Record<string,{color:string,bg:string}> = {
   admin: { color:'#f59e0b', bg:'rgba(245,158,11,0.12)' },
   manager: { color:'#5b6ef9', bg:'rgba(91,110,249,0.12)' },
   member: { color:'#10b981', bg:'rgba(16,185,129,0.12)' },
-  viewer: { color:'rgba(255,255,255,0.5)', bg:'rgba(255,255,255,0.08)' },
+  viewer: { color:'var(--text-2)', bg:'var(--surface-2)' },
 };
 
 export default function TeamSettings() {
@@ -29,12 +29,12 @@ export default function TeamSettings() {
     <div className="p-6 max-w-3xl animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Team Settings</h1>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>Manage your team and permissions</p>
+          <h1 className="text-xl font-bold" style={{ color:"var(--text)" }}>Team Settings</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>Manage your team and permissions</p>
         </div>
         <button onClick={()=>setShowInvite(true)}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background:'#5b6ef9', color:'#fff' }}>
+          style={{ background:'#5b6ef9', color:'var(--text)' }}>
           <Plus size={13}/>Invite Member
         </button>
       </div>
@@ -49,42 +49,42 @@ export default function TeamSettings() {
           const Icon = s.icon;
           return (
             <div key={s.label} className="rounded-xl p-4"
-              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Icon size={13} style={{ color:'rgba(255,255,255,0.4)' }} />
-                <span className="text-xs" style={{ color:'rgba(255,255,255,0.4)' }}>{s.label}</span>
+                <Icon size={13} style={{ color:'var(--text-2)' }} />
+                <span className="text-xs" style={{ color:'var(--text-2)' }}>{s.label}</span>
               </div>
-              <p className="text-2xl font-bold text-white">{s.value}</p>
+              <p className="text-2xl font-bold" style={{ color:"var(--text)" }}>{s.value}</p>
             </div>
           );
         })}
       </div>
 
       {/* Members list */}
-      <div className="rounded-xl overflow-hidden" style={{ border:'1px solid rgba(255,255,255,0.07)' }}>
-        <div className="px-4 py-3" style={{ background:'rgba(255,255,255,0.03)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs font-semibold" style={{ color:'rgba(255,255,255,0.5)' }}>MEMBERS ({team.length})</p>
+      <div className="rounded-xl overflow-hidden" style={{ border:'1px solid var(--border)' }}>
+        <div className="px-4 py-3" style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)' }}>
+          <p className="text-xs font-semibold" style={{ color:'var(--text-2)' }}>MEMBERS ({team.length})</p>
         </div>
         {team.map((m, i) => {
           const rc = roleColors[m.role] || roleColors.member;
           return (
             <div key={m.id} className="flex items-center gap-3 px-4 py-3 group"
-              style={{ borderBottom: i<team.length-1?'1px solid rgba(255,255,255,0.04)':'none' }}>
+              style={{ borderBottom: i<team.length-1?'1px solid var(--border)':'none' }}>
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                 style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
                 {m.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-white">{m.name}</p>
+                  <p className="text-sm font-medium" style={{ color:"var(--text)" }}>{m.name}</p>
                   {m.role==='admin' && <Crown size={11} style={{ color:'#f59e0b' }} />}
                 </div>
-                <p className="text-xs" style={{ color:'rgba(255,255,255,0.4)' }}>{m.email}</p>
+                <p className="text-xs" style={{ color:'var(--text-2)' }}>{m.email}</p>
               </div>
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize"
                 style={{ background:rc.bg, color:rc.color }}>{m.role}</span>
               <button className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color:'rgba(255,255,255,0.3)' }}>
+                style={{ color:'var(--text-3)' }}>
                 <MoreHorizontal size={14}/>
               </button>
             </div>
@@ -93,8 +93,8 @@ export default function TeamSettings() {
       </div>
 
       {/* Workspace settings */}
-      <div className="mt-6 rounded-xl p-5" style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
-        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="mt-6 rounded-xl p-5" style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
+        <h3 className="text-sm font-semibold  mb-4 flex items-center gap-2" style={{ color:"var(--text)" }}>
           <Settings size={14}/>Workspace Settings
         </h3>
         <div className="space-y-3">
@@ -104,15 +104,15 @@ export default function TeamSettings() {
             {label:'Sender Domain',value:'acmecorp.com'},
           ].map(f=>(
             <div key={f.label} className="flex items-center justify-between">
-              <span className="text-sm" style={{ color:'rgba(255,255,255,0.6)' }}>{f.label}</span>
+              <span className="text-sm" style={{ color:'var(--text-2)' }}>{f.label}</span>
               <input defaultValue={f.value}
                 className="px-3 py-1.5 text-sm rounded-lg outline-none text-right"
-                style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'#fff', width:220 }} />
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)', width:220 }} />
             </div>
           ))}
         </div>
         <button className="mt-4 text-xs font-semibold px-4 py-2 rounded-lg"
-          style={{ background:'#5b6ef9', color:'#fff' }}
+          style={{ background:'#5b6ef9', color:'var(--text)' }}
           onClick={()=>toast('success','Workspace settings saved')}>
           Save Changes
         </button>
@@ -122,27 +122,27 @@ export default function TeamSettings() {
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-              style={{ color:'rgba(255,255,255,0.4)' }}>Email Address</label>
+              style={{ color:'var(--text-2)' }}>Email Address</label>
             <input placeholder="colleague@company.com" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)}
               className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-              style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
           </div>
           <div>
             <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-              style={{ color:'rgba(255,255,255,0.4)' }}>Role</label>
+              style={{ color:'var(--text-2)' }}>Role</label>
             <select value={inviteRole} onChange={e=>setInviteRole(e.target.value as any)}
               className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-              style={{ background:'#1a1a1a', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
               {ROLES.map(r=><option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={()=>setShowInvite(false)}
               className="px-4 py-2 text-sm rounded-lg"
-              style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)' }}>Cancel</button>
+              style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleInvite}
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-lg"
-              style={{ background:'#5b6ef9', color:'#fff' }}>
+              style={{ background:'#5b6ef9', color:'var(--text)' }}>
               <Mail size={12}/>Send Invite
             </button>
           </div>

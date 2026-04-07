@@ -34,7 +34,7 @@ const CLIENT_DATA = [
   { name:'Gmail',       value:45, fill:'#5b6ef9' },
   { name:'Outlook',     value:30, fill:'#8b5cf6' },
   { name:'Apple Mail',  value:15, fill:'#10b981' },
-  { name:'Other',       value:10, fill:'rgba(255,255,255,0.2)' },
+  { name:'Other',       value:10, fill:'var(--text-3)' },
 ];
 const AB_DATA = [
   { variant:'A: "Quick question about {{company}}"', sent:480, opens:'47.2%', clicks:'8.1%', replies:'12.3%', winner:true },
@@ -69,7 +69,7 @@ export default function EmailAnalytics() {
     { label:'Click Rate',    value:`${totals.clickRate}%`,       icon:MousePointer,color:'#8b5cf6', change:'+0.8%' },
     { label:'Reply Rate',    value:`${totals.replyRate}%`,       icon:Reply,       color:'#f59e0b', change:'+1.1%' },
     { label:'Bounce Rate',   value:`${totals.bounceRate}%`,      icon:AlertCircle, color:'#ef4444', change:'-0.3%' },
-    { label:'Unsub Rate',    value:`${totals.unsubRate}%`,       icon:UserMinus,   color:'rgba(255,255,255,0.4)', change:'-0.1%' },
+    { label:'Unsub Rate',    value:`${totals.unsubRate}%`,       icon:UserMinus,   color:'var(--text-2)', change:'-0.1%' },
   ];
 
   const S = { color:'var(--text)', background:'var(--surface)', border:'1px solid var(--border)' };

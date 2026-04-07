@@ -75,7 +75,7 @@ export default function Accounts() {
           </div>
           <button onClick={()=>setShowAdd(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            style={{ background:'#5b6ef9', color:'#fff' }}>
+            style={{ background:'#5b6ef9', color:'var(--text)' }}>
             <Plus size={13}/>Add Account
           </button>
         </div>
@@ -84,7 +84,7 @@ export default function Accounts() {
       <div className="grid grid-cols-3 gap-4">
         {filtered.length === 0 ? (
           <div className="col-span-3 text-center py-20">
-            <Building2 size={36} className="mx-auto mb-3" style={{ color:'rgba(255,255,255,0.1)' }} />
+            <Building2 size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
             <p className="text-sm" style={{ color:'var(--text-3)' }}>No accounts found</p>
             <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
               style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add first account</button>
@@ -186,7 +186,7 @@ export default function Accounts() {
               style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleAdd}
               className="px-4 py-2 text-sm font-semibold rounded-lg"
-              style={{ background:'#5b6ef9', color:'#fff' }}>Add Account</button>
+              style={{ background:'#5b6ef9', color:'var(--text)' }}>Add Account</button>
           </div>
         </div>
       </Modal>

@@ -23,7 +23,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-900/50">
             <Zap size={18} className="text-white" />
           </div>
-          <span className="text-white font-bold text-lg">ProspectIQ</span>
+          <span className="font-bold text-lg" style={{ color:"var(--text)" }}>ProspectIQ</span>
         </div>
         <div className="relative z-10 space-y-8">
           <div>
@@ -33,7 +33,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">JK</div>
               <div>
-                <p className="text-white font-semibold text-sm">Jordan Kim</p>
+                <p className="font-semibold text-sm" style={{ color:"var(--text)" }}>Jordan Kim</p>
                 <p className="text-slate-400 text-sm">VP Marketing, Rippling</p>
               </div>
             </div>
@@ -41,7 +41,7 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
           <div className="grid grid-cols-3 gap-3">
             {[{ v:'2,400+', l:'Teams' }, { v:'18K+', l:'Meetings Booked' }, { v:'$240M+', l:'Pipeline Created' }].map(s => (
               <div key={s.l} className="bg-white/5 rounded-xl p-4 border border-white/10 backdrop-blur-sm">
-                <p className="text-xl font-bold text-white">{s.v}</p>
+                <p className="text-xl font-bold" style={{ color:"var(--text)" }}>{s.v}</p>
                 <p className="text-slate-400 text-xs mt-1">{s.l}</p>
               </div>
             ))}
@@ -54,9 +54,9 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center"><Zap size={15} className="text-white" /></div>
-            <span className="text-white font-bold">ProspectIQ</span>
+            <span className="font-bold" style={{ color:"var(--text)" }}>ProspectIQ</span>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1">{isSignUp ? 'Create your account' : 'Welcome back'}</h2>
+          <h2 className="text-2xl font-bold  mb-1" style={{ color:"var(--text)" }}>{isSignUp ? 'Create your account' : 'Welcome back'}</h2>
           <p className="text-slate-400 text-sm mb-7">{isSignUp ? 'Start free — no credit card required.' : 'Sign in to your workspace.'}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

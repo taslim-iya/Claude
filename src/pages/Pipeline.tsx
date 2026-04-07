@@ -72,14 +72,14 @@ export default function Pipeline() {
     <div className="p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Pipeline</h1>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>
+          <h1 className="text-xl font-bold" style={{ color:"var(--text)" }}>Pipeline</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>
             ${(totalValue/1000).toFixed(0)}k total · ${(wonValue/1000).toFixed(0)}k won
           </p>
         </div>
         <button onClick={()=>setShowAdd(true)}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background:'#5b6ef9', color:'#fff' }}>
+          style={{ background:'#5b6ef9', color:'var(--text)' }}>
           <Plus size={13}/>Add Deal
         </button>
       </div>
@@ -92,22 +92,22 @@ export default function Pipeline() {
           return (
             <div key={stage}
               className="flex-shrink-0 rounded-xl p-3"
-              style={{ width:220, background:'rgba(255,255,255,0.025)', border:`1px solid ${dragOverId===stage?color:'rgba(255,255,255,0.06)'}` }}
+              style={{ width:220, background:'var(--surface)', border:`1px solid ${dragOverId===stage?color:'var(--surface-2)'}` }}
               onDragOver={e=>{e.preventDefault();setDragOverId(stage);}}
               onDrop={()=>handleDrop(stage)}
               onDragLeave={()=>setDragOverId(null)}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ background:color }} />
-                  <span className="text-xs font-semibold text-white">{stageLabels[stage]}</span>
+                  <span className="text-xs font-semibold" style={{ color:"var(--text)" }}>{stageLabels[stage]}</span>
                 </div>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full"
-                  style={{ background:'rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.5)' }}>
+                  style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>
                   {deals.length}
                 </span>
               </div>
               {stageValue > 0 && (
-                <p className="text-[10px] mb-2" style={{ color:'rgba(255,255,255,0.35)' }}>
+                <p className="text-[10px] mb-2" style={{ color:'var(--text-3)' }}>
                   ${stageValue.toLocaleString()}
                 </p>
               )}
@@ -118,18 +118,18 @@ export default function Pipeline() {
                     onDragStart={()=>setDragId(d.id)}
                     onDragEnd={()=>{setDragId(null);setDragOverId(null);}}
                     className="rounded-lg p-3 cursor-grab active:cursor-grabbing group"
-                    style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', opacity:dragId===d.id?0.5:1 }}>
+                    style={{ background:'var(--surface)', border:'1px solid var(--border)', opacity:dragId===d.id?0.5:1 }}>
                     <div className="flex items-start justify-between gap-1">
-                      <p className="text-xs font-semibold text-white leading-tight flex-1">{d.name}</p>
+                      <p className="text-xs font-semibold  leading-tight flex-1" style={{ color:"var(--text)" }}>{d.name}</p>
                       <button onClick={()=>setDeleteId(d.id)}
                         className="opacity-0 group-hover:opacity-100 flex-shrink-0"
-                        style={{ color:'rgba(255,255,255,0.3)' }}>
+                        style={{ color:'var(--text-3)' }}>
                         <Trash2 size={10}/>
                       </button>
                     </div>
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <Building2 size={10} style={{ color:'rgba(255,255,255,0.3)' }} />
-                      <span className="text-[10px] truncate" style={{ color:'rgba(255,255,255,0.45)' }}>{d.accountName}</span>
+                      <Building2 size={10} style={{ color:'var(--text-3)' }} />
+                      <span className="text-[10px] truncate" style={{ color:'var(--text-2)' }}>{d.accountName}</span>
                     </div>
                     {d.value > 0 && (
                       <div className="flex items-center gap-1.5 mt-1">
@@ -139,15 +139,15 @@ export default function Pipeline() {
                     )}
                     {d.closeDate && (
                       <div className="flex items-center gap-1.5 mt-1">
-                        <Calendar size={10} style={{ color:'rgba(255,255,255,0.25)' }} />
-                        <span className="text-[10px]" style={{ color:'rgba(255,255,255,0.35)' }}>{d.closeDate}</span>
+                        <Calendar size={10} style={{ color:'var(--text-3)' }} />
+                        <span className="text-[10px]" style={{ color:'var(--text-3)' }}>{d.closeDate}</span>
                       </div>
                     )}
                   </div>
                 ))}
                 {deals.length === 0 && (
                   <div className="text-center py-4">
-                    <p className="text-[10px]" style={{ color:'rgba(255,255,255,0.2)' }}>Drop deals here</p>
+                    <p className="text-[10px]" style={{ color:'var(--text-3)' }}>Drop deals here</p>
                   </div>
                 )}
               </div>
@@ -167,28 +167,28 @@ export default function Pipeline() {
             ].map(f=>(
               <div key={f.key}>
                 <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                  style={{ color:'rgba(255,255,255,0.4)' }}>{f.label}</label>
+                  style={{ color:'var(--text-2)' }}>{f.label}</label>
                 <input type={f.type||'text'} placeholder={f.placeholder}
                   value={(form as any)[f.key]} onChange={e=>setForm(x=>({...x,[f.key]:e.target.value}))}
                   className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                  style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', colorScheme:'dark' }} />
+                  style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)', colorScheme:'dark' }} />
               </div>
             ))}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color:'rgba(255,255,255,0.4)' }}>Deal Value ($)</label>
+                style={{ color:'var(--text-2)' }}>Deal Value ($)</label>
               <input type="number" placeholder="25000" value={form.value||''} onChange={e=>setForm(x=>({...x,value:Number(e.target.value)}))}
                 className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }} />
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
             </div>
             <div>
               <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
-                style={{ color:'rgba(255,255,255,0.4)' }}>Stage</label>
+                style={{ color:'var(--text-2)' }}>Stage</label>
               <select value={form.stage} onChange={e=>setForm(x=>({...x,stage:e.target.value as PipelineStage}))}
                 className="w-full px-3 py-2 text-sm rounded-lg outline-none"
-                style={{ background:'#1a1a1a', border:'1px solid rgba(255,255,255,0.1)', color:'#fff' }}>
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
                 {KANBAN_STAGES.map(s=><option key={s} value={s}>{stageLabels[s]}</option>)}
               </select>
             </div>
@@ -196,10 +196,10 @@ export default function Pipeline() {
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={()=>setShowAdd(false)}
               className="px-4 py-2 text-sm rounded-lg"
-              style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)' }}>Cancel</button>
+              style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleAdd}
               className="px-4 py-2 text-sm font-semibold rounded-lg"
-              style={{ background:'#5b6ef9', color:'#fff' }}>Add Deal</button>
+              style={{ background:'#5b6ef9', color:'var(--text)' }}>Add Deal</button>
           </div>
         </div>
       </Modal>

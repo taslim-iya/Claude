@@ -25,6 +25,10 @@ import Integrations from './pages/Integrations';
 import Billing from './pages/Billing';
 import Profile from './pages/Profile';
 import LeadScoring from './pages/LeadScoring';
+import AIAutomation from './pages/AIAutomation';
+import AIQualification from './pages/AIQualification';
+import MeetingScheduler from './pages/MeetingScheduler';
+import AIAssistant from './components/ui/AIAssistant';
 
 function AppShell() {
   const { showCmd, setShowCmd } = useApp();
@@ -65,12 +69,16 @@ function AppShell() {
             <Route path="/integrations"  element={<Integrations />} />
             <Route path="/billing"       element={<Billing />} />
             <Route path="/profile"       element={<Profile />} />
-            <Route path="/lead-scoring"  element={<LeadScoring />} />
+            <Route path="/lead-scoring"      element={<LeadScoring />} />
+            <Route path="/ai-automation"     element={<AIAutomation />} />
+            <Route path="/ai-qualification"  element={<AIQualification />} />
+            <Route path="/meetings"          element={<MeetingScheduler />} />
           </Routes>
         </main>
       </div>
       <Toasts />
       {showCmd && <CommandPalette />}
+      <AIAssistant />
     </div>
   );
 }

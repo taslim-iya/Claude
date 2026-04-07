@@ -46,12 +46,12 @@ export default function Integrations() {
     <div className="p-6 max-w-4xl animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-white">Integrations</h1>
-          <p className="text-sm mt-0.5" style={{ color:'rgba(255,255,255,0.4)' }}>Connect ProspectIQ to your existing tools.</p>
+          <h1 className="text-xl font-bold" style={{ color:"var(--text)" }}>Integrations</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>Connect ProspectIQ to your existing tools.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs" style={{ color:'rgba(255,255,255,0.4)' }}>
+        <div className="flex items-center gap-2 text-xs" style={{ color:'var(--text-2)' }}>
           <CheckCircle size={13} className="text-emerald-400"/>
-          <span><span className="font-semibold text-white">{connected}</span> of {integrations.length} connected</span>
+          <span><span className="font-semibold" style={{ color:"var(--text)" }}>{connected}</span> of {integrations.length} connected</span>
         </div>
       </div>
 
@@ -61,9 +61,9 @@ export default function Integrations() {
           <button key={c} onClick={()=>setActiveCategory(c)}
             className="px-4 py-1.5 rounded-full text-xs font-medium transition-colors"
             style={{
-              background: activeCategory===c?'#5b6ef9':'rgba(255,255,255,0.05)',
-              color: activeCategory===c?'#fff':'rgba(255,255,255,0.5)',
-              border: activeCategory===c?'1px solid transparent':'1px solid rgba(255,255,255,0.08)'
+              background: activeCategory===c?'#5b6ef9':'var(--surface-2)',
+              color: activeCategory===c?'#fff':'var(--text-2)',
+              border: activeCategory===c?'1px solid transparent':'1px solid var(--border)'
             }}>{c}</button>
         ))}
       </div>
@@ -73,13 +73,13 @@ export default function Integrations() {
           const status = getStatus(i);
           return (
             <div key={i.id} className="rounded-xl p-5 group transition-all hover:shadow-glass"
-              style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+              style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl ${i.color}`}>{i.logo}</div>
                   <div>
-                    <h3 className="text-sm font-semibold text-white">{i.name}</h3>
-                    <span className="text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>{i.category}</span>
+                    <h3 className="text-sm font-semibold" style={{ color:"var(--text)" }}>{i.name}</h3>
+                    <span className="text-xs" style={{ color:'var(--text-3)' }}>{i.category}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -91,22 +91,22 @@ export default function Integrations() {
                   <button onClick={()=>toggle(i.id, status)}
                     className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
                     style={{
-                      background: status==='connected'?'rgba(255,255,255,0.06)':'rgba(91,110,249,0.15)',
-                      color: status==='connected'?'rgba(255,255,255,0.5)':'#5b6ef9',
-                      border: status==='connected'?'1px solid rgba(255,255,255,0.08)':'1px solid rgba(91,110,249,0.2)'
+                      background: status==='connected'?'var(--surface-2)':'rgba(91,110,249,0.15)',
+                      color: status==='connected'?'var(--text-2)':'#5b6ef9',
+                      border: status==='connected'?'1px solid var(--border)':'1px solid rgba(91,110,249,0.2)'
                     }}>
                     {status==='connected'?'Disconnect':'Connect'}
                   </button>
                 </div>
               </div>
-              <p className="text-xs leading-relaxed" style={{ color:'rgba(255,255,255,0.45)' }}>{i.desc}</p>
+              <p className="text-xs leading-relaxed" style={{ color:'var(--text-2)' }}>{i.desc}</p>
               {status==='connected' && (
                 <div className="mt-3 pt-3 space-y-3"
-                  style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+                  style={{ borderTop:'1px solid var(--border)' }}>
                   {/* API Key field */}
                   <div>
                     <label className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider mb-1.5"
-                      style={{ color:'rgba(255,255,255,0.3)' }}>
+                      style={{ color:'var(--text-3)' }}>
                       <Key size={9}/>API Key
                     </label>
                     <div className="flex gap-1.5">
@@ -115,11 +115,11 @@ export default function Integrations() {
                         value={apiKeys[i.id]??'sk-demo-key-xxxxxxxxxxxxxxxx'}
                         onChange={e=>setApiKeys(s=>({...s,[i.id]:e.target.value}))}
                         className="flex-1 text-xs px-2.5 py-1.5 rounded-lg outline-none font-mono"
-                        style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.7)' }}
+                        style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text-2)' }}
                       />
                       <button onClick={()=>setShowKey(s=>({...s,[i.id]:!s[i.id]}))}
                         className="text-[10px] px-2 rounded-lg"
-                        style={{ background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.07)' }}>
+                        style={{ background:'var(--surface-2)', color:'var(--text-2)', border:'1px solid var(--border)' }}>
                         {showKey[i.id]?'Hide':'Show'}
                       </button>
                     </div>
@@ -128,20 +128,20 @@ export default function Integrations() {
                   {CREDITS[i.id] !== undefined && (
                     <div className="flex items-center gap-2 text-xs">
                       <Coins size={11} style={{ color:'#f59e0b' }}/>
-                      <span style={{ color:'rgba(255,255,255,0.5)' }}>Credits:</span>
-                      <span className="font-semibold text-white">{CREDITS[i.id].toLocaleString()}</span>
-                      <span style={{ color:'rgba(255,255,255,0.3)' }}>remaining</span>
+                      <span style={{ color:'var(--text-2)' }}>Credits:</span>
+                      <span className="font-semibold" style={{ color:"var(--text)" }}>{CREDITS[i.id].toLocaleString()}</span>
+                      <span style={{ color:'var(--text-3)' }}>remaining</span>
                     </div>
                   )}
                   {/* Sync frequency */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs" style={{ color:'rgba(255,255,255,0.35)' }}>
+                    <div className="flex items-center gap-1.5 text-xs" style={{ color:'var(--text-3)' }}>
                       <Clock size={10}/>
                       <select value={syncFreq[i.id]??'Hourly'}
                         onChange={e=>setSyncFreq(s=>({...s,[i.id]:e.target.value}))}
                         className="text-[11px] outline-none"
-                        style={{ background:'transparent', color:'rgba(255,255,255,0.5)', border:'none' }}>
-                        {SYNC_OPTIONS.map(o=><option key={o} value={o} style={{background:'#1a1a1a'}}>{o}</option>)}
+                        style={{ background:'transparent', color:'var(--text-2)', border:'none' }}>
+                        {SYNC_OPTIONS.map(o=><option key={o} value={o} style={{background:'var(--surface-2)'}}>{o}</option>)}
                       </select>
                     </div>
                     <div className="flex items-center gap-2">
@@ -171,8 +171,8 @@ export default function Integrations() {
             <Zap size={18} style={{ color:'#5b6ef9' }} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">Custom Webhooks & API</h3>
-            <p className="text-xs" style={{ color:'rgba(255,255,255,0.5)' }}>Build custom integrations with the ProspectIQ API.</p>
+            <h3 className="text-sm font-semibold" style={{ color:"var(--text)" }}>Custom Webhooks & API</h3>
+            <p className="text-xs" style={{ color:'var(--text-2)' }}>Build custom integrations with the ProspectIQ API.</p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -181,7 +181,7 @@ export default function Integrations() {
             <Plus size={13}/>Add Webhook
           </button>
           <button className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-lg"
-            style={{ background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.6)', border:'1px solid rgba(255,255,255,0.08)' }}>
+            style={{ background:'var(--surface-2)', color:'var(--text-2)', border:'1px solid var(--border)' }}>
             <ExternalLink size={13}/>API Docs
           </button>
         </div>

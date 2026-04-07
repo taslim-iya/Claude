@@ -122,7 +122,7 @@ export default function Leads() {
           </button>
           <button onClick={() => setShowAdd(true)}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-            style={{ background:'#5b6ef9', color:'#fff' }}>
+            style={{ background:'#5b6ef9', color:'var(--text)' }}>
             <Plus size={13}/>Add Lead
           </button>
         </div>
@@ -312,7 +312,7 @@ export default function Leads() {
               style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
             <button onClick={handleAdd}
               className="px-4 py-2 text-sm font-semibold rounded-lg"
-              style={{ background:'#5b6ef9', color:'#fff' }}>Add Lead</button>
+              style={{ background:'#5b6ef9', color:'var(--text)' }}>Add Lead</button>
           </div>
         </div>
       </Modal>

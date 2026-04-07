@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Download, Trash2, AlertCircle, UserX, Shield, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Download, Trash2, AlertCircle, UserX, Shield, ToggleLeft, ToggleRight, Brain } from 'lucide-react';
 
 type Tab = 'bounces' | 'unsubscribes';
 type BounceFilter = 'all' | 'hard' | 'soft';
@@ -14,10 +14,10 @@ const BOUNCES = [
 ];
 
 const UNSUBS = [
-  { id:'u1', email:'opt.out@example.com',   name:'Marcus Chen',   reason:'Unsubscribed via link',date:'2026-04-05', campaign:'Q2 Outreach' },
-  { id:'u2', email:'spam.report@gmail.com', name:'Lisa Park',     reason:'Spam complaint',       date:'2026-04-04', campaign:'FinTech Leaders' },
-  { id:'u3', email:'noemail@company.com',   name:'Robert Davis',  reason:'Manual unsubscribe',   date:'2026-04-03', campaign:'Enterprise Push' },
-  { id:'u4', email:'remove@business.co',    name:'Amy Wilson',    reason:'Unsubscribed via link',date:'2026-04-02', campaign:'SaaS Campaign' },
+  { id:'u1', email:'opt.out@example.com',   name:'Marcus Chen',   reason:'Unsubscribed via link',date:'2026-04-05', campaign:'Q2 Outreach',      sentiment:'Neutral',  sentColor:'#f59e0b' },
+  { id:'u2', email:'spam.report@gmail.com', name:'Lisa Park',     reason:'Spam complaint',       date:'2026-04-04', campaign:'FinTech Leaders',   sentiment:'Negative', sentColor:'#ef4444' },
+  { id:'u3', email:'noemail@company.com',   name:'Robert Davis',  reason:'Manual unsubscribe',   date:'2026-04-03', campaign:'Enterprise Push',   sentiment:'Timing',   sentColor:'#10b981' },
+  { id:'u4', email:'remove@business.co',    name:'Amy Wilson',    reason:'Unsubscribed via link',date:'2026-04-02', campaign:'SaaS Campaign',     sentiment:'Neutral',  sentColor:'#f59e0b' },
 ];
 
 export default function BounceManager() {
@@ -155,7 +155,9 @@ export default function BounceManager() {
           <div className="card overflow-hidden">
             <table className="w-full">
               <thead>
-                <tr>{['Email','Name','Reason','Date','Campaign'].map(h => <th key={h} className="th">{h}</th>)}</tr>
+                <tr>
+                  {['Email','Name','Reason','AI Sentiment','Date','Campaign'].map(h => <th key={h} className="th">{h}</th>)}
+                </tr>
               </thead>
               <tbody>
                 {UNSUBS.map(u => (
@@ -164,6 +166,12 @@ export default function BounceManager() {
                     <td className="td">{u.name}</td>
                     <td className="td">
                       <span className={`badge text-[10px] ${u.reason==='Spam complaint'?'badge-red':'badge-gray'}`}>{u.reason}</span>
+                    </td>
+                    <td className="td">
+                      <span className="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full w-fit"
+                        style={{ background:`${u.sentColor}15`, color:u.sentColor }}>
+                        <Brain size={9}/>{u.sentiment}
+                      </span>
                     </td>
                     <td className="td text-xs" style={{ color:'var(--text-3)' }}>{u.date}</td>
                     <td className="td text-xs" style={{ color:'var(--text-3)' }}>{u.campaign}</td>

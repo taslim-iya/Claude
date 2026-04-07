@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Building2, UserCircle, List,
   Mail, Workflow, Inbox, BarChart2, Activity,
   GitBranch, CheckSquare, AlertOctagon, Zap,
-  Plug, CreditCard, Settings, ChevronRight, Target
+  Plug, CreditCard, Settings, ChevronRight, Target,
+  Sparkles, UserCheck, Calendar
 } from 'lucide-react';
 
 const nav = [
@@ -27,6 +28,11 @@ const nav = [
   { section: 'Revenue', items: [
     { to: '/pipeline', label: 'Pipeline', icon: GitBranch },
     { to: '/tasks',    label: 'Tasks',    icon: CheckSquare },
+  ]},
+  { section: 'Intelligence', items: [
+    { to: '/ai-automation',    label: 'AI Automation',    icon: Sparkles },
+    { to: '/ai-qualification', label: 'Qualification',    icon: UserCheck },
+    { to: '/meetings',         label: 'Meetings',         icon: Calendar },
   ]},
   { section: 'Settings', items: [
     { to: '/lead-scoring',  label: 'Lead Scoring', icon: Target },

@@ -136,14 +136,14 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
         <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center"><Zap size={13} className="text-white" /></div>
-            <span className="text-white font-semibold text-sm">ProspectIQ</span>
+            <span className="font-semibold text-sm" style={{ color:"var(--text)" }}>ProspectIQ</span>
           </div>
           <div className="flex gap-1.5 mb-4">
             {steps.map((_, i) => <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-white' : 'bg-white/25'}`} />)}
           </div>
-          <p className="text-white/70 text-xs font-medium uppercase tracking-wider">Step {step+1} of {steps.length}</p>
-          <h2 className="text-white text-xl font-bold">{steps[step].title}</h2>
-          <p className="text-white/70 text-sm">{steps[step].sub}</p>
+          <p className="/70 text-xs font-medium uppercase tracking-wider" style={{ color:"var(--text)" }}>Step {step+1} of {steps.length}</p>
+          <h2 className="text-xl font-bold" style={{ color:"var(--text)" }}>{steps[step].title}</h2>
+          <p className="/70 text-sm" style={{ color:"var(--text)" }}>{steps[step].sub}</p>
         </div>
         <div className="p-6">{steps_content[step]}</div>
         <div className="px-6 pb-6 flex justify-between items-center">
