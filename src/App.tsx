@@ -86,8 +86,6 @@ function AppShellWithLogout({ onLogout }: { onLogout: () => void }) {
 
 export default function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem('piq_auth') === 'true');
-  const [demoDismissed, setDemoDismissed] = useState(false);
-  const isDemo = localStorage.getItem('piq_demo') === 'true';
 
   const handleLogin = () => setAuthed(true);
   const handleLogout = () => {
@@ -108,12 +106,6 @@ export default function App() {
     <ThemeProvider>
       <AppProvider>
         <HashRouter>
-          {isDemo && !demoDismissed && (
-            <div style={{ background: '#5b6ef9', color: '#fff', height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, position: 'relative', flexShrink: 0, zIndex: 100 }}>
-              🎉 Demo Mode — You're viewing sample data. No real emails will be sent.
-              <button onClick={() => setDemoDismissed(true)} style={{ position: 'absolute', right: 16, background: 'transparent', color: 'rgba(255,255,255,0.7)', border: 'none', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
-            </div>
-          )}
           <AppShellWithLogout onLogout={handleLogout} />
         </HashRouter>
       </AppProvider>

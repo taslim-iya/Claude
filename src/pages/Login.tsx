@@ -13,14 +13,6 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
     onLogin();
   };
 
-  const tryDemo = () => {
-    setEmail('demo@prospectiq.com');
-    setPassword('demo');
-    localStorage.setItem('piq_auth', 'true');
-    localStorage.setItem('piq_demo', 'true');
-    onLogin();
-  };
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
       <div style={{ width: 400, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 32 }}>
@@ -75,12 +67,6 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
         {msg && (
           <p style={{ fontSize: 12, color: '#ef4444', marginBottom: 10, textAlign: 'center' }}>{msg}</p>
         )}
-
-        <button
-          onClick={tryDemo}
-          style={{ border: '1px solid var(--border)', color: 'var(--text-2)', width: '100%', padding: '10px', borderRadius: 8, background: 'transparent', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
-          ✨ Try Demo Mode
-        </button>
       </div>
     </div>
   );
