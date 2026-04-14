@@ -15,10 +15,12 @@ function ls<T>(key: string, fallback: T): T {
 }
 function setLs(key: string, val: unknown) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
-// Clear all data if this is an old session with demo data
-const DATA_VERSION = 'v2-live';
+// Always wipe legacy demo data — bump version string to force re-clear
+const DATA_VERSION = 'v4-live';
 if (localStorage.getItem('piq_data_version') !== DATA_VERSION) {
-  ['piq_accounts','piq_contacts','piq_campaigns','piq_opportunities','piq_tasks','piq_lists','piq_integrations','piq_plan','piq_profile'].forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage)
+    .filter(k => k.startsWith('piq_') && k !== 'piq_auth')
+    .forEach(k => localStorage.removeItem(k));
   localStorage.setItem('piq_data_version', DATA_VERSION);
 }
 
