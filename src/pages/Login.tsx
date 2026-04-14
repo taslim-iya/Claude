@@ -8,8 +8,9 @@ export default function Login({ onLogin }: { onLogin: () => void }) {
 
   const handleSignIn = () => {
     if (!email || !password) { setMsg('Email and password required'); return; }
+    // Clear any stale data from previous sessions
+    ['piq_accounts','piq_contacts','piq_campaigns','piq_opportunities','piq_tasks','piq_lists','piq_integrations','piq_plan','piq_profile','piq_demo'].forEach(k => localStorage.removeItem(k));
     localStorage.setItem('piq_auth', 'true');
-    localStorage.setItem('piq_demo', email === 'demo@prospectiq.com' ? 'true' : 'false');
     onLogin();
   };
 

@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import {
   LayoutDashboard, Users, Building2, UserCircle, List,
   Mail, Workflow, Inbox, BarChart2, Activity,
@@ -45,6 +46,7 @@ const nav = [
 
 export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
   const location = useLocation();
+  const { profile, currentPlan } = useApp();
 
   return (
     <aside style={{ width: 224, minWidth: 224, background: 'var(--sidebar)', borderRight: '1px solid var(--sidebar-border)', transition: 'background-color 300ms ease, border-color 300ms ease' }}
@@ -105,10 +107,12 @@ export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
           onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-3)'}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}>
           <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>SM</div>
+            style={{ background: 'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
+            {profile.name ? profile.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase() : '?'}
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text)' }}>Sarah Miller</p>
-            <p className="text-[10px] truncate" style={{ color: 'var(--text-3)' }}>Growth Plan</p>
+            <p className="text-xs font-semibold truncate" style={{ color: 'var(--text)' }}>{profile.name || 'Your Account'}</p>
+            <p className="text-[10px] truncate" style={{ color: 'var(--text-3)' }}>{currentPlan} Plan</p>
           </div>
           <ChevronRight size={12} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
         </div>

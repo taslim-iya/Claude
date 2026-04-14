@@ -46,9 +46,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [opportunities, setOpportunities] = useState<Opportunity[]>(() => ls('piq_opportunities', initOpportunities));
   const [tasks, setTasks] = useState<Task[]>(() => ls('piq_tasks', initTasks));
   const [lists, setLists] = useState<ProspectList[]>(() => ls('piq_lists', initLists));
-  const [integrations, setIntegrations] = useState<Record<string,boolean>>(() => ls('piq_integrations', {i1:true,i2:true,i4:true,i10:true,i12:true}));
-  const [currentPlan, setCurrentPlan] = useState(() => ls('piq_plan', 'Growth'));
-  const [profile, setProfile] = useState<Profile>(() => ls('piq_profile', { name:'Sarah Miller', email:'sarah.miller@company.com', title:'VP of Sales', phone:'+1 (415) 555-0101', company:'Acme Sales Co' }));
+  const [integrations, setIntegrations] = useState<Record<string,boolean>>(() => ls('piq_integrations', {}));
+  const [currentPlan, setCurrentPlan] = useState(() => ls('piq_plan', 'Starter'));
+  const [profile, setProfile] = useState<Profile>(() => ls('piq_profile', { name:'', email:'', title:'', phone:'', company:'' }));
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showCmd, setShowCmd] = useState(false);
 
