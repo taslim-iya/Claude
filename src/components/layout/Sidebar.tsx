@@ -60,8 +60,6 @@ export default function Sidebar({ onLogout }: { onLogout?: () => void }) {
         </div>
         <div>
           <span className="font-bold text-sm tracking-tight" style={{ color: 'var(--text)' }}>ProspectIQ</span>
-          <span className="ml-1.5 text-[9px] font-semibold px-1 py-0.5 rounded"
-            style={{ background: 'rgba(91,110,249,0.12)', color: '#5b6ef9' }}>BETA</span>
         </div>
       </div>
 
