@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { TrendingUp, Mail, MousePointer, Reply, AlertCircle, UserMinus, BarChart2, Award } from 'lucide-react';
+import { TrendingUp, Mail, MousePointer, Reply, AlertCircle, UserMinus, BarChart2 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, PieChart, Pie, Cell, CartesianGrid
@@ -8,20 +8,10 @@ import {
 
 type Range = '7d' | '30d' | '90d';
 
-function seed(n: number) { let x = Math.sin(n + 1) * 10000; return x - Math.floor(x); }
-
-function genDaily(days: number, base: number, variance: number) {
-  return Array.from({ length: days }, (_, i) => ({
-    date: new Date(Date.now() - (days - 1 - i) * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    opens:   Math.round((base + variance * seed(i * 3))     * 100),
-    clicks:  Math.round((base * 0.3 + variance * 0.15 * seed(i * 5)) * 100),
-    replies: Math.round((base * 0.12 + variance * 0.05 * seed(i * 7)) * 100),
-  }));
-}
-
 const heatmapDays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const heatmapHours = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
 
+function seed(n: number) { let x = Math.sin(n + 1) * 10000; return x - Math.floor(x); }
 function heatmapVal(d: number, h: number) {
   const base = seed(d * 24 + h) * 100;
   const workdayBoost = d < 5 ? 20 : -30;
@@ -31,14 +21,10 @@ function heatmapVal(d: number, h: number) {
 
 const DEVICE_DATA = [{ name:'Desktop', value:68, fill:'#5b6ef9' },{ name:'Mobile', value:32, fill:'#8b5cf6' }];
 const CLIENT_DATA = [
-  { name:'Gmail',       value:45, fill:'#5b6ef9' },
-  { name:'Outlook',     value:30, fill:'#8b5cf6' },
-  { name:'Apple Mail',  value:15, fill:'#10b981' },
-  { name:'Other',       value:10, fill:'var(--text-3)' },
-];
-const AB_DATA = [
-  { variant:'A: "Quick question about {{company}}"', sent:480, opens:'47.2%', clicks:'8.1%', replies:'12.3%', winner:true },
-  { variant:'B: "{{first_name}}, thought you\'d find this useful"', sent:480, opens:'41.8%', clicks:'6.9%', replies:'10.1%', winner:false },
+  { name:'Gmail',      value:45, fill:'#5b6ef9' },
+  { name:'Outlook',    value:30, fill:'#8b5cf6' },
+  { name:'Apple Mail', value:15, fill:'#10b981' },
+  { name:'Other',      value:10, fill:'var(--text-3)' },
 ];
 
 const CT = ({ active, payload, label }: any) => {
@@ -55,24 +41,49 @@ export default function EmailAnalytics() {
   const { campaigns } = useApp();
   const [range, setRange] = useState<Range>('30d');
   const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-  const daily = useMemo(() => genDaily(days, 0.28, 0.18), [days]);
 
-  const totals = useMemo(() => ({
-    sent: campaigns.reduce((a, c) => a + (c.emailsSent || 0), 0) || 14820,
-    delivered: 14502, delivRate: 97.9, openRate: 28.4, clickRate: 8.1,
-    replyRate: 11.2, bounceRate: 2.1, unsubRate: 0.4, spamRate: 0.18,
-  }), [campaigns]);
+  const totals = useMemo(() => {
+    const sent = campaigns.reduce((a, c) => a + (c.emailsSent || 0), 0);
+    const openRate = campaigns.length
+      ? Math.round(campaigns.reduce((a, c) => a + (c.openRate || 0), 0) / campaigns.length * 10) / 10
+      : 0;
+    const replyRate = campaigns.length
+      ? Math.round(campaigns.reduce((a, c) => a + (c.replyRate || 0), 0) / campaigns.length * 10) / 10
+      : 0;
+    return { sent, openRate, clickRate: 0, replyRate, bounceRate: 0, unsubRate: 0 };
+  }, [campaigns]);
+
+  const daily = useMemo(() => {
+    return Array.from({ length: days }, (_, i) => ({
+      date: new Date(Date.now() - (days - 1 - i) * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      opens: 0, clicks: 0, replies: 0,
+    }));
+  }, [days]);
 
   const stats = [
-    { label:'Emails Sent',   value:totals.sent.toLocaleString(), icon:Mail,        color:'#5b6ef9', change:'+12%' },
-    { label:'Open Rate',     value:`${totals.openRate}%`,        icon:TrendingUp,  color:'#10b981', change:'+2.3%' },
-    { label:'Click Rate',    value:`${totals.clickRate}%`,       icon:MousePointer,color:'#8b5cf6', change:'+0.8%' },
-    { label:'Reply Rate',    value:`${totals.replyRate}%`,       icon:Reply,       color:'#f59e0b', change:'+1.1%' },
-    { label:'Bounce Rate',   value:`${totals.bounceRate}%`,      icon:AlertCircle, color:'#ef4444', change:'-0.3%' },
-    { label:'Unsub Rate',    value:`${totals.unsubRate}%`,       icon:UserMinus,   color:'var(--text-2)', change:'-0.1%' },
+    { label:'Emails Sent',   value: totals.sent > 0 ? totals.sent.toLocaleString() : '—', icon:Mail,        color:'#5b6ef9' },
+    { label:'Open Rate',     value: totals.openRate > 0 ? `${totals.openRate}%` : '—',    icon:TrendingUp,  color:'#10b981' },
+    { label:'Click Rate',    value: totals.clickRate > 0 ? `${totals.clickRate}%` : '—',  icon:MousePointer,color:'#8b5cf6' },
+    { label:'Reply Rate',    value: totals.replyRate > 0 ? `${totals.replyRate}%` : '—',  icon:Reply,       color:'#f59e0b' },
+    { label:'Bounce Rate',   value: totals.bounceRate > 0 ? `${totals.bounceRate}%` : '—',icon:AlertCircle, color:'#ef4444' },
+    { label:'Unsub Rate',    value: totals.unsubRate > 0 ? `${totals.unsubRate}%` : '—',  icon:UserMinus,   color:'var(--text-2)' },
   ];
 
-  const S = { color:'var(--text)', background:'var(--surface)', border:'1px solid var(--border)' };
+  if (campaigns.length === 0) {
+    return (
+      <div className="p-6 animate-fade-in">
+        <div className="mb-6">
+          <h1 className="text-xl font-bold" style={{ color:'var(--text)' }}>Email Analytics</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>Track opens, clicks, and replies across all campaigns</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <BarChart2 size={40} className="mb-4" style={{ color:'var(--border-2)' }} />
+          <p className="text-base font-semibold mb-1" style={{ color:'var(--text)' }}>No campaign data yet</p>
+          <p className="text-sm" style={{ color:'var(--text-3)' }}>Create and send campaigns to start seeing analytics here</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 animate-fade-in space-y-6">
@@ -100,10 +111,9 @@ export default function EmailAnalytics() {
           return (
             <div key={s.label} className="card p-4 hover:shadow-glow transition-all">
               <div className="flex items-center justify-between mb-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:`${s.color}18` }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background:`${typeof s.color === 'string' && s.color.startsWith('#') ? s.color : '#6b7280'}18` }}>
                   <Icon size={13} style={{ color:s.color }} />
                 </div>
-                <span className="text-[10px] font-semibold" style={{ color: s.change.startsWith('+') ? '#10b981' : '#ef4444' }}>{s.change}</span>
               </div>
               <p className="text-xl font-bold" style={{ color:'var(--text)' }}>{s.value}</p>
               <p className="text-[10px] mt-0.5" style={{ color:'var(--text-3)' }}>{s.label}</p>
@@ -144,19 +154,16 @@ export default function EmailAnalytics() {
             </tr>
           </thead>
           <tbody>
-            {campaigns.slice(0,6).map((c, i) => {
-              const s = seed(i);
-              return (
-                <tr key={c.id} className="tr">
-                  <td className="td"><span className="font-medium">{c.name}</span></td>
-                  <td className="td">{(c.emailsSent || Math.round(200 + s * 800)).toLocaleString()}</td>
-                  <td className="td"><span style={{ color:'#10b981' }}>{(c.openRate || Math.round(20 + s * 30))}%</span></td>
-                  <td className="td">{(Math.round(5 + s * 12))}%</td>
-                  <td className="td"><span style={{ color:'#f59e0b' }}>{(c.replyRate || Math.round(8 + s * 15))}%</span></td>
-                  <td className="td"><span style={{ color:'#ef4444' }}>{Math.round(s * 3)}%</span></td>
-                </tr>
-              );
-            })}
+            {campaigns.slice(0, 6).map(c => (
+              <tr key={c.id} className="tr">
+                <td className="td"><span className="font-medium">{c.name}</span></td>
+                <td className="td">{(c.emailsSent || 0).toLocaleString()}</td>
+                <td className="td"><span style={{ color:'#10b981' }}>{c.openRate || 0}%</span></td>
+                <td className="td">—</td>
+                <td className="td"><span style={{ color:'#f59e0b' }}>{c.replyRate || 0}%</span></td>
+                <td className="td"><span style={{ color:'#ef4444' }}>—</span></td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
@@ -236,23 +243,11 @@ export default function EmailAnalytics() {
             <BarChart2 size={14} style={{ color:'#5b6ef9' }} />A/B Test Results
           </h3>
         </div>
-        <table className="w-full">
-          <thead>
-            <tr>{['Variant','Sent','Open Rate','Click Rate','Reply Rate','Winner'].map(h=><th key={h} className="th">{h}</th>)}</tr>
-          </thead>
-          <tbody>
-            {AB_DATA.map((row,i) => (
-              <tr key={i} className="tr">
-                <td className="td"><span className="text-xs">{row.variant}</span></td>
-                <td className="td">{row.sent}</td>
-                <td className="td">{row.opens}</td>
-                <td className="td">{row.clicks}</td>
-                <td className="td">{row.replies}</td>
-                <td className="td">{row.winner && <span className="flex items-center gap-1 text-amber-400 text-xs font-semibold"><Award size={12}/>Winner</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <BarChart2 size={28} className="mb-2" style={{ color:'var(--border-2)' }} />
+          <p className="text-sm font-medium" style={{ color:'var(--text-2)' }}>No A/B tests yet</p>
+          <p className="text-xs mt-1" style={{ color:'var(--text-3)' }}>Set up A/B tests in your campaigns to compare subject lines and copy</p>
+        </div>
       </div>
     </div>
   );

@@ -33,14 +33,6 @@ export default function LeadScoring() {
     setRules(r => r.map(x => x.id === id ? { ...x, [key]: val } : x));
   };
 
-  const preview = [
-    { name:'Jordan Lee',    company:'Stripe',  score:87, tier:'hot'  },
-    { name:'Sarah Chen',    company:'Notion',  score:62, tier:'warm' },
-    { name:'Marcus Davis',  company:'Figma',   score:34, tier:'cold' },
-    { name:'Priya Patel',   company:'Linear',  score:91, tier:'hot'  },
-    { name:'Alex Thompson', company:'Vercel',  score:48, tier:'warm' },
-  ];
-
   return (
     <div className="p-6 max-w-4xl animate-fade-in space-y-6">
       <div>
@@ -125,30 +117,11 @@ export default function LeadScoring() {
             <TrendingUp size={14} style={{ color:'#10b981' }}/>Score Preview
           </h3>
         </div>
-        <table className="w-full">
-          <thead><tr>{['Lead','Company','Score','Tier'].map(h=><th key={h} className="th">{h}</th>)}</tr></thead>
-          <tbody>
-            {preview.map(p => (
-              <tr key={p.name} className="tr">
-                <td className="td font-medium">{p.name}</td>
-                <td className="td" style={{ color:'var(--text-2)' }}>{p.company}</td>
-                <td className="td">
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 h-1.5 rounded-full" style={{ background:'var(--border-2)' }}>
-                      <div className="h-full rounded-full" style={{ width:`${p.score}%`, background: p.tier==='hot'?'#ef4444':p.tier==='warm'?'#f59e0b':'#5b6ef9' }} />
-                    </div>
-                    <span className="text-sm font-bold" style={{ color:'var(--text)' }}>{p.score}</span>
-                  </div>
-                </td>
-                <td className="td">
-                  <span className={`badge text-[10px] ${p.tier==='hot'?'badge-red':p.tier==='warm'?'badge-amber':'badge-blue'}`}>
-                    {p.tier==='hot'?'🔥':p.tier==='warm'?'☀️':'❄️'} {p.tier}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <TrendingUp size={28} className="mb-2" style={{ color:'var(--border-2)' }} />
+          <p className="text-sm font-medium" style={{ color:'var(--text-2)' }}>No leads to score yet</p>
+          <p className="text-xs mt-1" style={{ color:'var(--text-3)' }}>Add leads and save your rules to see scored previews here</p>
+        </div>
       </div>
     </div>
   );

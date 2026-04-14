@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { Mail, Reply, Star, Archive, Search, Brain, Calendar, XCircle, HelpCircle, TrendingUp, Settings, Plus, Trash2, Sparkles } from 'lucide-react';
 
-const threads = [
-  { id:'t1', name:'Jordan Lee', company:'Stripe', title:'Head of Growth', email:'jordan@stripe.com', subject:'Re: Quick question about growth', preview:'Thanks for reaching out! I\'d love to learn more about your platform...', time:'2m ago', status:'replied', unread:true, avatar:'JL', starred:true, aiClass:'interested' },
-  { id:'t2', name:'Emily Chen', company:'Notion', title:'VP Engineering', email:'emily@notion.so', subject:'Re: ProspectIQ demo request', preview:'Hi Sarah, thanks for the follow-up. Could we schedule a 30-minute call...', time:'1h ago', status:'interested', unread:true, avatar:'EC', starred:false, aiClass:'meeting_request' },
-  { id:'t3', name:'Marcus Davis', company:'Figma', title:'Director of Sales', email:'marcus@figma.com', subject:'Quick question about Figma', preview:'Hey Marcus, I noticed that Figma has been expanding its sales team...', time:'3h ago', status:'sent', unread:false, avatar:'MD', starred:false, aiClass:null },
-  { id:'t4', name:'Priya Patel', company:'Linear', title:'CEO', email:'priya@linear.app', subject:'Following up', preview:'Hi Priya, just circling back on my previous email about...', time:'Yesterday', status:'opened', unread:false, avatar:'PP', starred:true, aiClass:'out_of_office' },
-  { id:'t5', name:'Alex Thompson', company:'Vercel', title:'CTO', email:'alex@vercel.com', subject:'Q2 SaaS Outreach', preview:'Hi Alex, I\'d love to discuss how ProspectIQ can help Vercel...', time:'2 days ago', status:'sent', unread:false, avatar:'AT', starred:false, aiClass:null },
-  { id:'t6', name:'Sophie Wang', company:'Loom', title:'VP Product', email:'sophie@loom.com', subject:'Meeting request', preview:'Sophie, I noticed you recently launched a new feature...', time:'2 days ago', status:'bounced', unread:false, avatar:'SW', starred:false, aiClass:'not_interested' },
-];
+type Thread = { id:string; name:string; company:string; title:string; email:string; subject:string; preview:string; time:string; status:string; unread:boolean; avatar:string; starred:boolean; aiClass:string|null };
+const threads: Thread[] = [];
 
 const AI_CLASS_LABELS: Record<string,{label:string,color:string,bg:string,Icon:React.ElementType}> = {
   interested:      { label:'Interested',       color:'#10b981', bg:'rgba(16,185,129,0.12)',   Icon:TrendingUp },
@@ -29,11 +23,11 @@ const statusBadge: Record<string,{label:string,color:string,bg:string}> = {
 type RoutingRule = { id: string; trigger: string; action: string; };
 
 export default function OutreachCenter() {
-  const [selectedId, setSelectedId] = useState<string|null>('t1');
+  const [selectedId, setSelectedId] = useState<string|null>(null);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [reply, setReply] = useState('');
-  const [starred, setStarred] = useState<Set<string>>(new Set(threads.filter(t=>t.starred).map(t=>t.id)));
+  const [starred, setStarred] = useState<Set<string>>(new Set());
   const [showRouting, setShowRouting] = useState(false);
   const [showAICompose, setShowAICompose] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -79,7 +73,13 @@ export default function OutreachCenter() {
           ))}
         </div>
         <div className="flex-1 overflow-y-auto">
-          {filtered.map(t => {
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4">
+              <Mail size={28} className="mb-2" style={{ color:'var(--border-2)' }} />
+              <p className="text-sm font-medium" style={{ color:'var(--text-2)' }}>No threads yet</p>
+              <p className="text-xs mt-1" style={{ color:'var(--text-3)' }}>Replies from your campaigns will appear here</p>
+            </div>
+          ) : filtered.map(t => {
             const s = statusBadge[t.status];
             return (
               <div key={t.id}
