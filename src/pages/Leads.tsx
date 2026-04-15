@@ -309,6 +309,9 @@ export default function Leads() {
                 </th>
                 <th className="px-3 py-2.5 text-left font-medium" style={{ color: 'var(--text-3)' }}>Contact</th>
                 <th className="px-3 py-2.5 text-left font-medium" style={{ color: 'var(--text-3)' }}>Location</th>
+                <th className="px-3 py-2.5 text-left font-medium cursor-pointer" style={{ color: 'var(--text-3)' }} onClick={() => toggleSort('age')}>
+                  Est. {sortBy === 'age' && (sortDir === 'asc' ? '↑' : '↓')}
+                </th>
                 <th className="px-3 py-2.5 text-left font-medium cursor-pointer" style={{ color: 'var(--text-3)' }} onClick={() => toggleSort('score')}>
                   Score {sortBy === 'score' && (sortDir === 'asc' ? '↑' : '↓')}
                 </th>
@@ -339,7 +342,7 @@ export default function Leads() {
                       <p className="font-semibold text-[12px] leading-tight">{a.name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{ background: 'var(--surface-2)', color: 'var(--text-3)' }}>{a.industry}</span>
-                        <span className="text-[9px] mono" style={{ color: 'var(--text-3)' }}>{a.companyAge}yr · {a.employeeCount} emp · {a.revenueBand}</span>
+                        <span className="text-[9px] mono" style={{ color: 'var(--text-3)' }}>Est. {a.incorporatedYear} ({a.companyAge}yr) · {a.employeeCount} emp · {a.revenueBand}</span>
                       </div>
                       <a href={a.website} target="_blank" onClick={e => e.stopPropagation()} className="text-[10px] flex items-center gap-1 mt-0.5 hover:underline" style={{ color: 'var(--primary)' }}>
                         <Globe size={9} /> {a.domain} <ExternalLink size={8} />
@@ -364,6 +367,10 @@ export default function Leads() {
                         <span className="text-[11px]">{a.town}</span>
                       </div>
                       <span className="text-[9px] mono" style={{ color: 'var(--text-3)' }}>{a.postcode}</span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className="text-[12px] font-semibold">{a.incorporatedYear}</span>
+                      <span className="text-[9px] ml-1" style={{ color: 'var(--text-3)' }}>({a.companyAge}yr)</span>
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-1.5">
