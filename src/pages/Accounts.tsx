@@ -1,0 +1,274 @@
+import { useState } from 'react';
+import { useApp } from '../context/AppContext';
+import { Plus, Search, Trash2, Building2 } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+
+const PER_PAGE = 20;
+
+const INDUSTRY_OPTS = ['SaaS','FinTech','HealthTech','E-commerce','Enterprise','Agency','Manufacturing','Other'];
+
+function statusBadge(enrichmentStatus: string) {
+  const map: Record<string,string> = {
+    enriched:'bg-emerald-500/15 text-emerald-400',
+    partial:'bg-amber-500/15 text-amber-400',
+    not_enriched:'bg-gray-500/15 text-gray-400',
+  };
+  return map[enrichmentStatus] ?? 'bg-gray-500/15 text-gray-400';
+}
+
+export default function Accounts() {
+  const { accounts, accountOps, contacts, toast } = useApp();
+  const [search, setSearch] = useState('');
+  const [showAdd, setShowAdd] = useState(false);
+  const [deleteId, setDeleteId] = useState<string|null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [form, setForm] = useState({ name:'', domain:'', industry:'SaaS', headquarters:'', description:'' });
+
+  const filtered = accounts.filter(a => {
+    const q = search.toLowerCase();
+    return !search || a.name.toLowerCase().includes(q) || a.domain?.toLowerCase().includes(q) || a.industry.toLowerCase().includes(q);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * PER_PAGE;
+  const pageEnd = Math.min(pageStart + PER_PAGE, filtered.length);
+  const pageRows = filtered.slice(pageStart, pageEnd);
+
+  const toggleAll = () => {
+    if (pageRows.every(a => selected.has(a.id))) {
+      const next = new Set(selected);
+      pageRows.forEach(a => next.delete(a.id));
+      setSelected(next);
+    } else {
+      const next = new Set(selected);
+      pageRows.forEach(a => next.add(a.id));
+      setSelected(next);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+
+  const handleAdd = () => {
+    if (!form.name) { toast('error','Company name required'); return; }
+    const now = new Date().toISOString();
+    accountOps.add({
+      id: crypto.randomUUID(),
+      name: form.name, domain: form.domain, industry: form.industry,
+      headquarters: form.headquarters, description: form.description,
+      website: form.domain ? `https://${form.domain}` : '',
+      linkedin: '', employeeCount: 0, revenueBand: '', country: '',
+      technologies: [], enrichmentStatus: 'not_enriched',
+      leadScore: 0, scoreLabel: 'nurture', owner: 'Sarah Miller',
+      source: 'Manual', tags: [], lastUpdated: now, createdAt: now,
+    });
+    setShowAdd(false);
+    setForm({ name:'', domain:'', industry:'SaaS', headquarters:'', description:'' });
+  };
+
+  const contactCount = (accountName: string) => contacts.filter(c => c.accountName === accountName).length;
+
+  const allPageSelected = pageRows.length > 0 && pageRows.every(a => selected.has(a.id));
+
+  return (
+    <div className="p-6 animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color:'var(--text)' }}>Accounts</h1>
+          <p className="text-sm mt-0.5" style={{ color:'var(--text-2)' }}>{accounts.length} companies tracked</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
+            <input value={search} onChange={e=>{ setSearch(e.target.value); setPage(1); }}
+              placeholder="Search accounts..."
+              className="pl-9 pr-3 py-2 text-sm rounded-lg outline-none w-56"
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
+          </div>
+          <button onClick={()=>setShowAdd(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
+            style={{ background:'#5b6ef9', color:'var(--text)' }}>
+            <Plus size={13}/>Add Account
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-20">
+          <Building2 size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
+          <p className="text-sm" style={{ color:'var(--text-3)' }}>No accounts found</p>
+          <button onClick={()=>setShowAdd(true)} className="mt-3 text-xs px-4 py-2 rounded-lg"
+            style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9' }}>Add first account</button>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-xl overflow-x-auto" style={{ border:'1px solid var(--border)' }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background:'var(--surface-2)', borderBottom:'1px solid var(--border)' }}>
+                  <th className="w-10 px-4 py-3">
+                    <input type="checkbox" className="w-3.5 h-3.5" checked={allPageSelected} onChange={toggleAll} />
+                  </th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Company</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Industry</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Enrichment</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Contacts</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Employees</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Score</th>
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color:'var(--text-3)' }}>Last Updated</th>
+                  <th className="w-10 px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map(a => (
+                  <tr
+                    key={a.id}
+                    className="group transition-colors"
+                    style={{ borderBottom:'1px solid var(--border)' }}
+                    onMouseEnter={e=>(e.currentTarget.style.background='var(--surface-2)')}
+                    onMouseLeave={e=>(e.currentTarget.style.background='transparent')}
+                  >
+                    <td className="px-4 py-3">
+                      <input type="checkbox" className="w-3.5 h-3.5" checked={selected.has(a.id)} onChange={()=>toggleSelect(a.id)} />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+                          style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>
+                          {a.name.slice(0,2).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-semibold leading-tight" style={{ color:'var(--text)' }}>{a.name}</p>
+                          {(a.domain || a.website) && (
+                            <p className="text-xs" style={{ color:'var(--text-3)' }}>{a.domain || a.website}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{a.industry}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadge(a.enrichmentStatus)}`}>
+                        {a.enrichmentStatus.replace(/_/g,' ')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{contactCount(a.name)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{a.employeeCount || '—'}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div style={{ width:32, height:4, background:'var(--border)', borderRadius:2 }}>
+                          <div style={{ width:`${a.leadScore}%`, height:4, background: a.leadScore>=80?'#10b981':a.leadScore>=60?'#f59e0b':'#ef4444', borderRadius:2 }}/>
+                        </div>
+                        <span className="text-[13px]" style={{ color:'var(--text-2)' }}>{a.leadScore||'—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-[13px]" style={{ color:'var(--text-2)' }}>
+                        {new Date(a.lastUpdated || a.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button onClick={()=>setDeleteId(a.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded"
+                          style={{ color:'var(--text-3)' }}>
+                          <Trash2 size={13}/>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-[13px]" style={{ color:'var(--text-3)' }}>
+              Showing {pageStart + 1}–{pageEnd} of {filtered.length}
+            </span>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={()=>setPage(p)}
+                  className="w-7 h-7 flex items-center justify-center text-xs rounded"
+                  style={{
+                    background: p === safePage ? '#5b6ef9' : 'var(--surface-2)',
+                    color: p === safePage ? '#fff' : 'var(--text-2)',
+                    border: '1px solid var(--border)',
+                  }}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      <Modal open={showAdd} onClose={()=>setShowAdd(false)} title="Add Account" size="md">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+                style={{ color:'var(--text-2)' }}>Company Name *</label>
+              <input placeholder="Acme Corp" value={form.name} onChange={e=>setForm(x=>({...x,name:e.target.value}))}
+                className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
+            </div>
+            {[
+              {label:'Domain',key:'domain',placeholder:'acmecorp.com'},
+              {label:'Headquarters',key:'headquarters',placeholder:'San Francisco, CA'},
+            ].map(f=>(
+              <div key={f.key}>
+                <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+                  style={{ color:'var(--text-2)' }}>{f.label}</label>
+                <input placeholder={f.placeholder}
+                  value={(form as any)[f.key]} onChange={e=>setForm(x=>({...x,[f.key]:e.target.value}))}
+                  className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+                  style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
+              </div>
+            ))}
+          </div>
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5"
+              style={{ color:'var(--text-2)' }}>Industry</label>
+            <select value={form.industry} onChange={e=>setForm(x=>({...x,industry:e.target.value}))}
+              className="w-full px-3 py-2 text-sm rounded-lg outline-none"
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
+              {INDUSTRY_OPTS.map(o=><option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={()=>setShowAdd(false)}
+              className="px-4 py-2 text-sm rounded-lg"
+              style={{ background:'var(--surface-2)', color:'var(--text-2)' }}>Cancel</button>
+            <button onClick={handleAdd}
+              className="px-4 py-2 text-sm font-semibold rounded-lg"
+              style={{ background:'#5b6ef9', color:'var(--text)' }}>Add Account</button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={()=>setDeleteId(null)}
+        onConfirm={()=>{ accountOps.del(deleteId!); setDeleteId(null); }}
+        title="Delete Account"
+        message="Are you sure? All associated data will be removed."
+        confirmLabel="Delete Account"
+        variant="danger"
+      />
+    </div>
+  );
+}

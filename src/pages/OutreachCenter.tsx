@@ -1,0 +1,320 @@
+import { useState } from 'react';
+import { Mail, Reply, Star, Archive, Search, Brain, Calendar, XCircle, HelpCircle, TrendingUp, Settings, Plus, Trash2, Sparkles } from 'lucide-react';
+
+type Thread = { id:string; name:string; company:string; title:string; email:string; subject:string; preview:string; time:string; status:string; unread:boolean; avatar:string; starred:boolean; aiClass:string|null };
+const threads: Thread[] = [];
+
+const AI_CLASS_LABELS: Record<string,{label:string,color:string,bg:string,Icon:React.ElementType}> = {
+  interested:      { label:'Interested',       color:'#10b981', bg:'rgba(16,185,129,0.12)',   Icon:TrendingUp },
+  meeting_request: { label:'Meeting Request',   color:'#5b6ef9', bg:'rgba(91,110,249,0.12)',  Icon:Calendar },
+  out_of_office:   { label:'Out of Office',     color:'#f59e0b', bg:'rgba(245,158,11,0.12)',  Icon:Archive },
+  not_interested:  { label:'Not Interested',    color:'#ef4444', bg:'rgba(239,68,68,0.12)',   Icon:XCircle },
+  question:        { label:'Question',          color:'#a78bfa', bg:'rgba(167,139,250,0.12)', Icon:HelpCircle },
+};
+
+const statusBadge: Record<string,{label:string,color:string,bg:string}> = {
+  replied:  { label:'Replied',   color:'#10b981', bg:'rgba(16,185,129,0.12)' },
+  interested:{ label:'Interested', color:'#5b6ef9', bg:'rgba(91,110,249,0.12)' },
+  sent:     { label:'Sent',      color:'var(--text-2)', bg:'var(--surface-2)' },
+  opened:   { label:'Opened',    color:'#f59e0b', bg:'rgba(245,158,11,0.12)' },
+  bounced:  { label:'Bounced',   color:'#ef4444', bg:'rgba(239,68,68,0.12)' },
+};
+
+type RoutingRule = { id: string; trigger: string; action: string; };
+
+export default function OutreachCenter() {
+  const [selectedId, setSelectedId] = useState<string|null>(null);
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const [reply, setReply] = useState('');
+  const [starred, setStarred] = useState<Set<string>>(new Set());
+  const [showRouting, setShowRouting] = useState(false);
+  const [showAICompose, setShowAICompose] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState('');
+  const [aiTone, setAiTone] = useState('Professional');
+  const [rules, setRules] = useState<RoutingRule[]>([
+    { id:'r1', trigger:'meeting_request', action:'Notify on Slack + Add to Hot Leads' },
+    { id:'r2', trigger:'not_interested',  action:'Unsubscribe + Move to Cold' },
+    { id:'r3', trigger:'out_of_office',   action:'Pause sequence for 7 days' },
+  ]);
+
+  const filters = ['all','replied','interested','opened','sent','bounced'];
+
+  const filtered = threads.filter(t => {
+    const matchFilter = filter==='all' || t.status===filter;
+    const q = search.toLowerCase();
+    const matchSearch = !search || t.name.toLowerCase().includes(q) || t.company.toLowerCase().includes(q) || t.subject.toLowerCase().includes(q);
+    return matchFilter && matchSearch;
+  });
+
+  const selected = threads.find(t => t.id === selectedId);
+
+  return (
+    <div className="flex h-full animate-fade-in" style={{ height:'calc(100vh - 56px)' }}>
+      {/* Thread list */}
+      <div className="flex flex-col border-r" style={{ width:320, borderColor:'var(--border)', background:'var(--bg-2)' }}>
+        <div className="p-3 border-b" style={{ borderColor:'var(--border)' }}>
+          <div className="relative">
+            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color:'var(--text-3)' }} />
+            <input value={search} onChange={e=>setSearch(e.target.value)}
+              placeholder="Search threads..."
+              className="w-full pl-8 pr-3 py-2 text-xs rounded-lg outline-none"
+              style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }} />
+          </div>
+        </div>
+        <div className="flex gap-1 px-3 py-2 overflow-x-auto" style={{ borderBottom:'1px solid var(--border)' }}>
+          {filters.map(f=>(
+            <button key={f} onClick={()=>setFilter(f)}
+              className="text-[10px] px-2 py-1 rounded capitalize whitespace-nowrap flex-shrink-0"
+              style={{ background:filter===f?'rgba(91,110,249,0.2)':'transparent', color:filter===f?'#5b6ef9':'var(--text-2)' }}>
+              {f}
+            </button>
+          ))}
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-12 text-center px-4">
+              <Mail size={28} className="mb-2" style={{ color:'var(--border-2)' }} />
+              <p className="text-sm font-medium" style={{ color:'var(--text-2)' }}>No threads yet</p>
+              <p className="text-xs mt-1" style={{ color:'var(--text-3)' }}>Replies from your campaigns will appear here</p>
+            </div>
+          ) : filtered.map(t => {
+            const s = statusBadge[t.status];
+            return (
+              <div key={t.id}
+                onClick={()=>setSelectedId(t.id)}
+                className="flex items-start gap-3 px-3 py-3 cursor-pointer transition-colors"
+                style={{
+                  background: selectedId===t.id?'rgba(91,110,249,0.08)':'transparent',
+                  borderBottom:'1px solid var(--border)'
+                }}>
+                <div className="relative">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+                    style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>{t.avatar}</div>
+                  {t.unread && <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ background:'#5b6ef9' }} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold truncate" style={{ color: t.unread ? 'var(--text)' : 'var(--text-2)' }}>{t.name}</span>
+                    <span className="text-[10px] flex-shrink-0" style={{ color:'var(--text-3)' }}>{t.time}</span>
+                  </div>
+                  <p className="text-[10px] mt-0.5 truncate" style={{ color:'var(--text-2)' }}>{t.subject}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {t.aiClass && AI_CLASS_LABELS[t.aiClass] && (() => {
+                      const cls = AI_CLASS_LABELS[t.aiClass!]!;
+                      const Icon = cls.Icon;
+                      return (
+                        <span className="flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                          style={{ background:cls.bg, color:cls.color }}>
+                          <Brain size={8}/>{cls.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Thread detail */}
+      {selected ? (
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Thread header */}
+          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom:'1px solid var(--border)' }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                style={{ background:'linear-gradient(135deg,#5b6ef9,#8b5cf6)' }}>{selected.avatar}</div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold" style={{ color:"var(--text)" }}>{selected.name}</p>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background:statusBadge[selected.status].bg, color:statusBadge[selected.status].color }}>
+                    {statusBadge[selected.status].label}
+                  </span>
+                </div>
+                <p className="text-xs" style={{ color:'var(--text-2)' }}>{selected.title} · {selected.company} · {selected.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {selected.aiClass && AI_CLASS_LABELS[selected.aiClass] && (() => {
+                const cls = AI_CLASS_LABELS[selected.aiClass!]!;
+                const Icon = cls.Icon;
+                return (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background:cls.bg, color:cls.color }}>
+                    <Brain size={11}/>{cls.label}
+                  </span>
+                );
+              })()}
+              <button onClick={()=>setShowRouting(v=>!v)}
+                className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors"
+                style={{ background:showRouting?'rgba(91,110,249,0.2)':'var(--surface-2)', color:showRouting?'#5b6ef9':'var(--text-2)' }}>
+                <Settings size={12}/>Routes
+              </button>
+              <button onClick={()=>setStarred(s=>{const n=new Set(s);n.has(selected.id)?n.delete(selected.id):n.add(selected.id);return n;})}
+                style={{ color:starred.has(selected.id)?'#f59e0b':'var(--text-3)' }}>
+                <Star size={16} fill={starred.has(selected.id)?'#f59e0b':'none'}/>
+              </button>
+              <button style={{ color:'var(--text-3)' }}><Archive size={15}/></button>
+            </div>
+          </div>
+
+          {/* Email thread */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="rounded-xl p-4" style={{ background:'var(--surface)', border:'1px solid var(--border)' }}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-xs font-semibold" style={{ color:"var(--text)" }}>Sarah Miller → {selected.email}</p>
+                  <p className="text-[10px]" style={{ color:'var(--text-3)' }}>Subject: {selected.subject}</p>
+                </div>
+                <span className="text-[10px]" style={{ color:'var(--text-3)' }}>{selected.time}</span>
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color:'var(--text-2)' }}>
+                Hi {selected.name.split(' ')[0]},<br/><br/>
+                I noticed that {selected.company} has been growing its team significantly. I wanted to reach out about ProspectIQ — 
+                a platform that helps sales teams like yours find, enrich, and reach out to prospects at scale.<br/><br/>
+                Would you be open to a quick 15-minute call this week?<br/><br/>
+                Best,<br/>Sarah
+              </p>
+            </div>
+
+            {(selected.status==='replied'||selected.status==='interested') && (
+              <div className="rounded-xl p-4 ml-8" style={{ background:'rgba(91,110,249,0.06)', border:'1px solid rgba(91,110,249,0.15)' }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color:'#5b6ef9' }}>{selected.name} → you</p>
+                  </div>
+                  <span className="text-[10px]" style={{ color:'var(--text-3)' }}>{selected.time}</span>
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color:'var(--text)' }}>{selected.preview}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Routing rules panel */}
+          {showRouting && (
+            <div className="mx-6 mb-4 rounded-xl overflow-hidden" style={{ border:'1px solid rgba(91,110,249,0.2)' }}>
+              <div className="flex items-center justify-between px-4 py-3"
+                style={{ background:'rgba(91,110,249,0.08)', borderBottom:'1px solid rgba(91,110,249,0.15)' }}>
+                <div className="flex items-center gap-2">
+                  <Brain size={13} style={{ color:'#5b6ef9' }}/>
+                  <p className="text-xs font-semibold" style={{ color:"var(--text)" }}>Auto-Routing Rules</p>
+                </div>
+                <button onClick={()=>setRules(r=>[...r,{id:Date.now().toString(),trigger:'interested',action:'Notify on Slack'}])}
+                  className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded"
+                  style={{ background:'rgba(91,110,249,0.2)', color:'#5b6ef9' }}>
+                  <Plus size={10}/>Add Rule
+                </button>
+              </div>
+              <div className="divide-y" style={{ background:'var(--surface)', '--tw-divide-opacity':1 } as React.CSSProperties}>
+                {rules.map(rule=>(
+                  <div key={rule.id} className="flex items-center gap-3 px-4 py-2.5">
+                    <select value={rule.trigger}
+                      onChange={e=>setRules(r=>r.map(x=>x.id===rule.id?{...x,trigger:e.target.value}:x))}
+                      className="text-xs px-2 py-1 rounded-lg outline-none"
+                      style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }}>
+                      {Object.entries(AI_CLASS_LABELS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                    </select>
+                    <span className="text-xs" style={{ color:'var(--text-3)' }}>→</span>
+                    <input value={rule.action}
+                      onChange={e=>setRules(r=>r.map(x=>x.id===rule.id?{...x,action:e.target.value}:x))}
+                      className="flex-1 text-xs px-2 py-1 rounded-lg outline-none"
+                      style={{ background:'var(--surface-2)', border:'1px solid var(--border-2)', color:'var(--text)' }} />
+                    <button onClick={()=>setRules(r=>r.filter(x=>x.id!==rule.id))}
+                      style={{ color:'var(--text-3)' }}><Trash2 size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reply composer */}
+          <div className="p-4" style={{ borderTop:'1px solid var(--border)' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border:'1px solid var(--border-2)' }}>
+              <div className="px-4 py-2 flex items-center gap-2 text-xs" style={{ background:'var(--surface)', borderBottom:'1px solid var(--border)', color:'var(--text-2)' }}>
+                <Reply size={11}/>
+                <span>Replying to {selected.name}</span>
+              </div>
+              <textarea rows={3} value={reply} onChange={e=>setReply(e.target.value)}
+                placeholder="Type your reply..."
+                className="w-full px-4 py-3 text-sm outline-none resize-none"
+                style={{ background:'transparent', color:'var(--text)' }} />
+              {showAICompose && (
+                <div className="mx-4 mb-3 rounded-xl p-3 space-y-2" style={{ background:'rgba(91,110,249,0.06)', border:'1px solid rgba(91,110,249,0.18)' }}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={11} style={{ color:'#5b6ef9' }}/>
+                    <p className="text-xs font-semibold" style={{ color:'var(--text)' }}>AI Generate</p>
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {['Professional','Friendly','Direct','Persuasive'].map(t=>(
+                      <button key={t} onClick={()=>setAiTone(t)}
+                        className="text-[10px] px-2 py-1 rounded-lg transition-all"
+                        style={{ background:aiTone===t?'rgba(91,110,249,0.2)':'var(--surface-2)', color:aiTone===t?'#5b6ef9':'var(--text-3)', border:aiTone===t?'1px solid rgba(91,110,249,0.3)':'1px solid var(--border)' }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  {aiResult && (
+                    <textarea rows={2} readOnly value={aiResult}
+                      className="w-full text-xs px-3 py-2 rounded-lg resize-none outline-none"
+                      style={{ background:'var(--surface-2)', border:'1px solid var(--border)', color:'var(--text)' }}/>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <button disabled={aiLoading}
+                      onClick={()=>{
+                        setAiLoading(true);
+                        setTimeout(()=>{
+                          const variants = [
+                            `Hi ${selected.name.split(' ')[0]}, thanks for your reply! I'd love to show you how ProspectIQ can help ${selected.company} scale outreach. Are you free for a 20-min call this week?`,
+                            `Great hearing from you! Our platform has helped teams like yours at ${selected.company} 3x their reply rates. Happy to walk you through a quick demo.`,
+                            `Appreciate you getting back to me. I have a few specific ideas for ${selected.company} that I think you'd find valuable — worth a quick call?`,
+                          ];
+                          setAiResult(variants[(aiResult ? variants.indexOf(aiResult)+1 : 0) % variants.length] || variants[0]);
+                          setAiLoading(false);
+                        }, 900);
+                      }}
+                      className="flex items-center gap-1 text-[11px] font-medium px-3 py-1.5 rounded-lg"
+                      style={{ background:'rgba(91,110,249,0.15)', color:'#5b6ef9', border:'1px solid rgba(91,110,249,0.2)' }}>
+                      {aiLoading ? <><span className="animate-spin inline-block w-2.5 h-2.5 border border-indigo-400 border-t-transparent rounded-full"/>Generating…</> : <><Sparkles size={9}/>{aiResult?'Regenerate':'Generate'}</>}
+                    </button>
+                    {aiResult && (
+                      <button onClick={()=>{ setReply(aiResult); setShowAICompose(false); setAiResult(''); }}
+                        className="text-[11px] font-medium px-3 py-1.5 rounded-lg"
+                        style={{ background:'#5b6ef9', color:'#fff' }}>
+                        Insert
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between px-4 py-2" style={{ borderTop:'1px solid var(--border)' }}>
+                <div className="flex gap-2">
+                  <button onClick={()=>{ setShowAICompose(v=>!v); setAiResult(''); }}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
+                    style={{ background:showAICompose?'rgba(91,110,249,0.15)':'var(--surface-2)', color:showAICompose?'#5b6ef9':'var(--text-2)', border:showAICompose?'1px solid rgba(91,110,249,0.2)':'1px solid var(--border)' }}>
+                    <Sparkles size={10}/>AI Generate
+                  </button>
+                </div>
+                <button className="flex items-center gap-1.5 text-xs font-semibold px-4 py-1.5 rounded-lg"
+                  style={{ background:'#5b6ef9', color:'#fff' }}
+                  onClick={()=>{ if(reply.trim()){setReply('');} }}>
+                  <Mail size={12}/>Send Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Mail size={36} className="mx-auto mb-3" style={{ color:'var(--border-2)' }} />
+            <p className="text-sm" style={{ color:'var(--text-3)' }}>Select a thread to read</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
