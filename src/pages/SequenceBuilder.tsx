@@ -61,18 +61,21 @@ function getRecommendation(steps: Step[]): string {
 }
 
 const AI_MESSAGES: Record<string, string> = {
-  email_professional: "Hi {{first_name}},\n\nI came across {{company}} and wanted to reach out about a specific challenge I thought you might relate to.\n\nProspectIQ has helped similar teams increase their outbound reply rates by 3x in under 60 days.\n\nWould you have 15 minutes this week to explore if this could work for {{company}}?\n\nBest,\nSarah",
-  email_friendly: "Hey {{first_name}}! 👋\n\nSpotted {{company}} doing some exciting work and had to reach out. We help sales teams find and close deals faster using AI-powered prospecting.\n\nWould love to chat — got 15 minutes this week?\n\nCheers,\nSarah",
+  email_professional: "Hi {{first_name}},\n\nI came across {{company}} and wanted to reach out. We help businesses like yours modernise their operations — from professional websites and booking systems to automated invoicing, accounting integration, and AI-powered workflows.\n\nMost clients see a 40%+ reduction in manual tasks within the first month.\n\nWould you have 15 minutes this week to explore if this could work for {{company}}?\n\nBest,\nSteve Pillon",
+  email_friendly: "Hey {{first_name}}! 👋\n\nSpotted {{company}} doing some great work and had to reach out. We build custom websites, automation tools, and AI systems for UK businesses — basically everything you need to stop wasting time on manual processes.\n\nWould love a quick chat — got 15 minutes this week?\n\nCheers,\nSteve",
 };
 
 export default function SequenceBuilder() {
   const { toast } = useApp();
-  const [name, setName] = useState('New Sequence');
+  const [name, setName] = useState('B2B Services — Website + Automation');
   const [steps, setSteps] = useState<Step[]>([
-    { id:'s1', type:'email', day:1, subject:'Quick question about {{company}}', body:'Hi {{first_name}},\n\nI noticed that {{company}} is...' },
-    { id:'s2', type:'wait', day:3, note:'Wait 2 days' },
-    { id:'s3', type:'email', day:5, subject:'Following up', body:'Hi {{first_name}},\n\nJust wanted to follow up...' },
-    { id:'s4', type:'linkedin', day:7, note:'Connect on LinkedIn' },
+    { id:'s1', type:'email', day:1, subject:'Quick question about {{company}}', body:'Hi {{first_name}},\n\nI came across {{company}} and was impressed by what you\'ve built.\n\nI work with businesses like yours to modernise operations — from professional websites to automation tools that eliminate repetitive admin work. Most clients see a 40%+ reduction in manual tasks within the first month.\n\nWould you be open to a quick 15-min call?\n\nBest,\nSteve Pillon' },
+    { id:'s2', type:'wait', day:3, note:'Wait 3 days' },
+    { id:'s3', type:'email', day:4, subject:'Re: Quick question about {{company}}', body:'Hi {{first_name}},\n\nJust bumping this up briefly. We recently helped a similar firm automate their invoicing and client onboarding — saved them roughly £2,000/month in admin costs.\n\nHappy to show you what that would look like for {{company}}.\n\nSteve' },
+    { id:'s4', type:'linkedin', day:6, note:'Connect on LinkedIn with personalised note mentioning their industry' },
+    { id:'s5', type:'wait', day:4, note:'Wait 4 days' },
+    { id:'s6', type:'email', day:10, subject:'Last one from me, {{first_name}}', body:'Hi {{first_name}},\n\nNo worries if the timing isn\'t right.\n\nI\'ll leave you with this: we\'ve helped 50+ UK businesses cut operational overhead by 30-50% with modern websites, accounting automation, and AI tools.\n\nIf things change, I\'m always here: steve@pillon.com\n\nBest,\nSteve' },
+    { id:'s7', type:'call', day:12, note:'If no reply after 3 emails, call to introduce yourself and ask about their current tech setup' },
   ]);
   const [expandedId, setExpandedId] = useState<string|null>('s1');
   const [dragId, setDragId] = useState<string|null>(null);

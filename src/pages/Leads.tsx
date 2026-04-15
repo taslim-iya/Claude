@@ -7,6 +7,7 @@ import ExportModal from '../components/ui/ExportModal';
 import EnrichmentModal from '../components/ui/EnrichmentModal';
 import ImportLeadsModal from '../components/ui/ImportLeadsModal';
 import LeadDetailPanel from '../components/LeadDetailPanel';
+import SendEmailModal from '../components/ui/SendEmailModal';
 import type { Contact } from '../types';
 
 const STATUS_OPTS = ['not_contacted','in_sequence','replied','interested','not_interested','unsubscribed','bounced'] as const;
@@ -36,6 +37,8 @@ export default function Leads() {
   const [showEnrich, setShowEnrich] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [selectedContact, setSelectedContact] = useState<Contact|null>(null);
+  const [showSendEmail, setShowSendEmail] = useState(false);
+  const [sendEmailContact, setSendEmailContact] = useState<Contact|null>(null);
   const [form, setForm] = useState({ firstName:'', lastName:'', email:'', title:'', accountName:'', outreachStatus:'not_contacted' as typeof STATUS_OPTS[number], source:'Apollo', phone:'' });
   const [page, setPage] = useState(1);
   const PER_PAGE = 15;
@@ -152,11 +155,18 @@ export default function Leads() {
           ))}
         </div>
         {selected.size > 0 && (
-          <button onClick={handleBulkDelete}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg ml-auto"
-            style={{ background:'rgba(239,68,68,0.1)', color:'#ef4444', border:'1px solid rgba(239,68,68,0.2)' }}>
-            <Trash2 size={12}/>Delete {selected.size}
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            <button onClick={() => { setShowSendEmail(true); setSendEmailContact(null); }}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+              style={{ background:'rgba(91,110,249,0.1)', color:'#5b6ef9', border:'1px solid rgba(91,110,249,0.2)' }}>
+              <Mail size={12}/>Email {selected.size}
+            </button>
+            <button onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
+              style={{ background:'rgba(239,68,68,0.1)', color:'#ef4444', border:'1px solid rgba(239,68,68,0.2)' }}>
+              <Trash2 size={12}/>Delete {selected.size}
+            </button>
+          </div>
         )}
       </div>
 
@@ -350,6 +360,13 @@ export default function Leads() {
       />
 
       <LeadDetailPanel contact={selectedContact} onClose={()=>setSelectedContact(null)} />
+      {showSendEmail && (
+        <SendEmailModal
+          contact={sendEmailContact}
+          contacts={sendEmailContact ? undefined : contacts.filter(c => selected.has(c.id))}
+          onClose={() => { setShowSendEmail(false); setSendEmailContact(null); }}
+        />
+      )}
     </div>
   );
 }
